@@ -200,6 +200,24 @@ export function JobDetailDialog({
                             </CardContent>
                         </Card>
                     )}
+
+                    {/* Tags */}
+                    {job.tags && job.tags.length > 0 && (
+                        <Card>
+                            <CardContent className="pt-4">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                                    Etiquetas
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {job.tags.map(tag => (
+                                        <Badge key={tag} variant="secondary">
+                                            {tag}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
 
                 {/* Actions */}

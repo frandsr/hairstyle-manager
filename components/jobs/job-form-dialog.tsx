@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { translations } from '@/lib/i18n/es-AR';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Job } from '@/lib/types/database';
+import { COMMON_TAGS } from '@/lib/constants/tags';
 
 interface JobFormDialogProps {
     open: boolean;
@@ -22,6 +24,7 @@ interface JobFormDialogProps {
         date: string;
         description: string;
         rating: number | null;
+        tags: string[];
     }) => Promise<void>;
     initialData?: Job;
 }
@@ -39,6 +42,8 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState('');
     const [rating, setRating] = useState<string>('5');
+    const [tags, setTags] = useState<string[]>([]);
+    const [customTag, setCustomTag] = useState('');
 
     // New client form state
     const [newClientName, setNewClientName] = useState('');
@@ -54,6 +59,7 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
             setDate(initialData.date.split('T')[0]);
             setDescription(initialData.description || '');
             setRating(initialData.rating?.toString() || '5');
+            setTags(initialData.tags || []);
         } else {
             // Reset form for new job
             setClientId('');
@@ -62,6 +68,7 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
             setDate(new Date().toISOString().split('T')[0]);
             setDescription('');
             setRating('5');
+            setTags([]);
         }
         setShowNewClientForm(false);
     }, [initialData, open]);
@@ -81,12 +88,15 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
                 notes: newClientNotes.trim() || null,
             });
 
-            // Refresh clients list
+            // Refresh clients list and wait for it to complete
             await refetch();
 
-            // Select the newly created client
+            // Select the newly created client after refresh
             if (newClient && 'id' in newClient) {
-                setClientId(newClient.id);
+                // Use setTimeout to ensure the client list has updated in the UI
+                setTimeout(() => {
+                    setClientId(newClient.id);
+                }, 100);
             }
 
             // Reset new client form
@@ -102,6 +112,26 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
         } finally {
             setAddingClient(false);
         }
+    };
+
+    const toggleTag = (tag: string) => {
+        setTags(prev =>
+            prev.includes(tag)
+                ? prev.filter(t => t !== tag)
+                : [...prev, tag]
+        );
+    };
+
+    const addCustomTag = () => {
+        const trimmed = customTag.trim();
+        if (trimmed && !tags.includes(trimmed)) {
+            setTags(prev => [...prev, trimmed]);
+            setCustomTag('');
+        }
+    };
+
+    const removeTag = (tag: string) => {
+        setTags(prev => prev.filter(t => t !== tag));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -122,6 +152,7 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
                 date: new Date(date).toISOString(),
                 description: description.trim(),
                 rating: rating ? parseInt(rating) : null,
+                tags,
             });
 
             onOpenChange(false);
@@ -286,7 +317,8 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
                                 placeholder="25000"
                                 required
                                 min="0"
-                                step="100"
+                                max="10000000"
+                                step="1"
                             />
                         </div>
                     </div>
@@ -303,7 +335,8 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
                                 onChange={(e) => setTipAmount(e.target.value)}
                                 placeholder="0"
                                 min="0"
-                                step="100"
+                                max="10000000"
+                                step="1"
                             />
                         </div>
                     </div>
@@ -329,6 +362,74 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Corte y color"
                         />
+                    </div>
+
+                    {/* Tags */}
+                    <div className="space-y-2">
+                        <Label>Etiquetas</Label>
+
+                        {/* Selected tags */}
+                        {tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 p-2 border rounded-md bg-muted/30">
+                                {tags.map(tag => (
+                                    <Badge
+                                        key={tag}
+                                        variant="secondary"
+                                        className="gap-1 pr-1"
+                                    >
+                                        {tag}
+                                        <button
+                                            type="button"
+                                            onClick={() => removeTag(tag)}
+                                            className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Common tags */}
+                        <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">Etiquetas comunes:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {COMMON_TAGS.map(tag => (
+                                    <Badge
+                                        key={tag}
+                                        variant={tags.includes(tag) ? "default" : "outline"}
+                                        className="cursor-pointer hover:opacity-80"
+                                        onClick={() => toggleTag(tag)}
+                                    >
+                                        {tag}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Custom tag input */}
+                        <div className="flex gap-2">
+                            <Input
+                                placeholder="Agregar etiqueta personalizada..."
+                                value={customTag}
+                                onChange={(e) => setCustomTag(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        addCustomTag();
+                                    }
+                                }}
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={addCustomTag}
+                                disabled={!customTag.trim()}
+                            >
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Rating */}

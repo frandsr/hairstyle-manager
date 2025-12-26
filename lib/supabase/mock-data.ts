@@ -30,6 +30,7 @@ export const mockClients: Client[] = [
         name: 'Ana García',
         phone: '+54 9 11 2345-6789',
         notes: 'Prefiere cortes modernos, color rubio',
+        status: 'good',
         created_at: new Date('2023-11-01').toISOString(),
         updated_at: new Date('2023-11-01').toISOString(),
     },
@@ -39,6 +40,7 @@ export const mockClients: Client[] = [
         name: 'Lucía Fernández',
         phone: '+54 9 11 3456-7890',
         notes: 'Cliente frecuente, tratamientos capilares',
+        status: 'good',
         created_at: new Date('2023-10-15').toISOString(),
         updated_at: new Date('2023-10-15').toISOString(),
     },
@@ -48,6 +50,7 @@ export const mockClients: Client[] = [
         name: 'Sofía Martínez',
         phone: '+54 9 11 4567-8901',
         notes: 'Corte y peinado para eventos',
+        status: 'warning',
         created_at: new Date('2023-09-20').toISOString(),
         updated_at: new Date('2023-09-20').toISOString(),
     },
@@ -57,6 +60,7 @@ export const mockClients: Client[] = [
         name: 'Valentina López',
         phone: null,
         notes: null,
+        status: 'good',
         created_at: new Date('2023-12-01').toISOString(),
         updated_at: new Date('2023-12-01').toISOString(),
     },
@@ -78,6 +82,7 @@ function generateMockJobs(): Job[] {
         description: 'Corte y color completo',
         photos: null,
         rating: 5,
+        tags: ['Corte', 'Color'],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     });
@@ -92,6 +97,7 @@ function generateMockJobs(): Job[] {
         description: 'Tratamiento de keratina',
         photos: null,
         rating: 5,
+        tags: ['Tratamiento', 'Keratina'],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     });
@@ -106,6 +112,7 @@ function generateMockJobs(): Job[] {
         description: 'Peinado para evento',
         photos: null,
         rating: 5,
+        tags: ['Peinado', 'Brushing'],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     });
@@ -121,6 +128,7 @@ function generateMockJobs(): Job[] {
         description: 'Corte y brushing',
         photos: null,
         rating: 4,
+        tags: ['Corte', 'Brushing'],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     });
@@ -135,6 +143,7 @@ function generateMockJobs(): Job[] {
         description: 'Corte simple',
         photos: null,
         rating: 5,
+        tags: ['Corte'],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     });

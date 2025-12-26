@@ -64,6 +64,7 @@ export interface Database {
                     name: string;
                     phone: string | null;
                     notes: string | null;
+                    status: 'good' | 'warning' | 'bad';
                     created_at: string;
                     updated_at: string;
                 };
@@ -73,6 +74,7 @@ export interface Database {
                     name: string;
                     phone?: string | null;
                     notes?: string | null;
+                    status?: 'good' | 'warning' | 'bad';
                     created_at?: string;
                     updated_at?: string;
                 };
@@ -80,6 +82,7 @@ export interface Database {
                     name?: string;
                     phone?: string | null;
                     notes?: string | null;
+                    status?: 'good' | 'warning' | 'bad';
                     updated_at?: string;
                 };
             };
@@ -94,6 +97,7 @@ export interface Database {
                     description: string | null;
                     photos: string[] | null;
                     rating: number | null;
+                    tags: string[];
                     created_at: string;
                     updated_at: string;
                 };
@@ -107,6 +111,7 @@ export interface Database {
                     description?: string | null;
                     photos?: string[] | null;
                     rating?: number | null;
+                    tags?: string[];
                     created_at?: string;
                     updated_at?: string;
                 };
@@ -118,6 +123,7 @@ export interface Database {
                     description?: string | null;
                     photos?: string[] | null;
                     rating?: number | null;
+                    tags?: string[];
                     updated_at?: string;
                 };
             };

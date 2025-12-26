@@ -6,6 +6,7 @@ import { useClients } from '@/lib/hooks/use-clients';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatDateLong, formatDateShort } from '@/lib/utils/date';
 import { translations } from '@/lib/i18n/es-AR';
@@ -31,8 +32,9 @@ export default function HistorialPage() {
         const client = job.client_id ? getClientById(job.client_id) : null;
         const clientName = client?.name.toLowerCase() || '';
         const description = job.description?.toLowerCase() || '';
+        const tags = job.tags?.map(t => t.toLowerCase()).join(' ') || '';
 
-        return clientName.includes(query) || description.includes(query);
+        return clientName.includes(query) || description.includes(query) || tags.includes(query);
     });
 
     // Group jobs by date
@@ -236,6 +238,17 @@ export default function HistorialPage() {
                                                         {job.rating && (
                                                             <div className="flex items-center gap-2">
                                                                 {renderStars(job.rating)}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Tags */}
+                                                        {job.tags && job.tags.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                                {job.tags.map(tag => (
+                                                                    <Badge key={tag} variant="secondary" className="text-xs">
+                                                                        {tag}
+                                                                    </Badge>
+                                                                ))}
                                                             </div>
                                                         )}
                                                     </div>

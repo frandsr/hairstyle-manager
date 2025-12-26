@@ -49,7 +49,7 @@ export const translations = {
     delete: 'Eliminar',
     confirmDelete: '¿Estás segura de eliminar este trabajo?',
     noJobs: 'No hay trabajos registrados',
-    search: 'Buscar por clienta o descripción...',
+    search: 'Buscar por clienta, descripción o etiqueta...',
   },
 
   // Clients
