@@ -3,18 +3,18 @@ export const translations = {
   // Navigation
   nav: {
     inicio: 'Inicio',
-    historial: 'Historial',
+    historial: 'Trabajos',
     clientas: 'Clientas',
     configuracion: 'Configuración',
   },
-  
+
   // Auth
   auth: {
     signInWithGoogle: 'Iniciar sesión con Google',
     signOut: 'Cerrar sesión',
     welcome: 'Bienvenida a EstilistaPro',
   },
-  
+
   // Dashboard
   dashboard: {
     week: 'Semana',
@@ -30,10 +30,10 @@ export const translations = {
     targetReached: '¡Objetivo alcanzado!',
     currentStreak: 'Racha actual: {count} semanas',
   },
-  
+
   // Jobs
   jobs: {
-    title: 'Historial de Trabajos',
+    title: 'Trabajos',
     newJob: 'Nuevo Trabajo',
     editJob: 'Editar Trabajo',
     deleteJob: 'Eliminar Trabajo',
@@ -49,8 +49,9 @@ export const translations = {
     delete: 'Eliminar',
     confirmDelete: '¿Estás segura de eliminar este trabajo?',
     noJobs: 'No hay trabajos registrados',
+    search: 'Buscar por clienta o descripción...',
   },
-  
+
   // Clients
   clients: {
     title: 'Mis Clientas',
@@ -66,7 +67,7 @@ export const translations = {
     noClients: 'No hay clientas registradas',
     confirmDelete: '¿Estás segura de eliminar esta clienta?',
   },
-  
+
   // Settings
   settings: {
     title: 'Configuración',
@@ -83,7 +84,7 @@ export const translations = {
     addTier: 'Agregar Nivel',
     removeTier: 'Eliminar Nivel',
   },
-  
+
   // Common
   common: {
     loading: 'Cargando...',
@@ -96,7 +97,7 @@ export const translations = {
     save: 'Guardar',
     cancel: 'Cancelar',
   },
-  
+
   // Days of week
   days: {
     saturday: 'Sábado',

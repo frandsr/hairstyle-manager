@@ -5,21 +5,38 @@ import { useJobs } from '@/lib/hooks/use-jobs';
 import { useClients } from '@/lib/hooks/use-clients';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatDateLong, formatDateShort } from '@/lib/utils/date';
 import { translations } from '@/lib/i18n/es-AR';
-import { Loader2, Calendar, DollarSign, User, Star, Trash2, Edit, StickyNote } from 'lucide-react';
+import { Loader2, Calendar, DollarSign, User, Star, Trash2, Edit, StickyNote, Search, Plus } from 'lucide-react';
 import { JobFormDialog } from '@/components/jobs/job-form-dialog';
+import { JobDetailDialog } from '@/components/jobs/job-detail-dialog';
 import type { Job } from '@/lib/types/database';
 
 export default function HistorialPage() {
-    const { jobs, loading, deleteJob, updateJob } = useJobs();
+    const { jobs, loading, deleteJob, updateJob, addJob } = useJobs();
     const { clients, getClientById } = useClients();
     const [editingJob, setEditingJob] = useState<Job | null>(null);
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Filter jobs by search query
+    const filteredJobs = jobs.filter((job) => {
+        if (!searchQuery) return true;
+
+        const query = searchQuery.toLowerCase();
+        const client = job.client_id ? getClientById(job.client_id) : null;
+        const clientName = client?.name.toLowerCase() || '';
+        const description = job.description?.toLowerCase() || '';
+
+        return clientName.includes(query) || description.includes(query);
+    });
 
     // Group jobs by date
-    const groupedJobs = jobs.reduce((groups, job) => {
+    const groupedJobs = filteredJobs.reduce((groups, job) => {
         const date = job.date.split('T')[0];
         if (!groups[date]) {
             groups[date] = [];
@@ -30,6 +47,11 @@ export default function HistorialPage() {
 
     // Sort dates descending
     const sortedDates = Object.keys(groupedJobs).sort((a, b) => b.localeCompare(a));
+
+    const handleViewDetails = (job: Job) => {
+        setSelectedJob(job);
+        setIsDetailOpen(true);
+    };
 
     const handleEdit = async (job: Job) => {
         setEditingJob(job);
@@ -49,8 +71,15 @@ export default function HistorialPage() {
     const handleSubmit = async (jobData: any) => {
         if (editingJob) {
             await updateJob(editingJob.id, jobData);
+        } else {
+            await addJob(jobData);
         }
         setEditingJob(null);
+    };
+
+    const handleNewJob = () => {
+        setEditingJob(null);
+        setIsFormOpen(true);
     };
 
     const renderStars = (rating: number | null) => {
@@ -79,7 +108,7 @@ export default function HistorialPage() {
         );
     }
 
-    if (jobs.length === 0) {
+    if (jobs.length === 0 && !searchQuery) {
         return (
             <div className="container max-w-2xl mx-auto p-4 pb-24">
                 <h1 className="text-3xl font-bold mb-6">{translations.nav.historial}</h1>
@@ -100,11 +129,42 @@ export default function HistorialPage() {
     return (
         <div className="container max-w-2xl mx-auto p-4 pb-24 space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold">{translations.nav.historial}</h1>
-                <div className="text-sm text-muted-foreground">
-                    {jobs.length} {jobs.length === 1 ? 'trabajo' : 'trabajos'}
-                </div>
+                <h1 className="text-3xl font-bold">{translations.jobs.title}</h1>
+                <Button onClick={handleNewJob} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    {translations.jobs.newJob}
+                </Button>
             </div>
+
+            {/* Search */}
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder={translations.jobs.search}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                />
+            </div>
+
+            {/* Results count */}
+            {searchQuery && (
+                <div className="text-sm text-muted-foreground">
+                    {filteredJobs.length} {filteredJobs.length === 1 ? 'resultado' : 'resultados'}
+                </div>
+            )}
+
+            {/* Empty state for search */}
+            {filteredJobs.length === 0 && searchQuery && (
+                <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                        <Search className="h-12 w-12 text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground text-center">
+                            No se encontraron trabajos para "{searchQuery}"
+                        </p>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Jobs grouped by date */}
             <div className="space-y-6">
@@ -138,7 +198,11 @@ export default function HistorialPage() {
                                     const client = job.client_id ? getClientById(job.client_id) : null;
 
                                     return (
-                                        <Card key={job.id} className="overflow-hidden">
+                                        <Card
+                                            key={job.id}
+                                            className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                                            onClick={() => handleViewDetails(job)}
+                                        >
                                             <CardContent className="p-4 space-y-3">
                                                 {/* Main Info */}
                                                 <div className="flex items-start justify-between">
@@ -165,7 +229,7 @@ export default function HistorialPage() {
                                                         {job.description && (
                                                             <div className="flex items-start gap-2 text-sm text-muted-foreground">
                                                                 <StickyNote className="h-4 w-4 mt-0.5" />
-                                                                <span>{job.description}</span>
+                                                                <span className="line-clamp-1">{job.description}</span>
                                                             </div>
                                                         )}
 
@@ -177,7 +241,7 @@ export default function HistorialPage() {
                                                     </div>
 
                                                     {/* Actions */}
-                                                    <div className="flex gap-1">
+                                                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
@@ -206,18 +270,26 @@ export default function HistorialPage() {
                 })}
             </div>
 
-            {/* Edit Job Dialog */}
-            {editingJob && (
-                <JobFormDialog
-                    open={isFormOpen}
-                    onOpenChange={(open) => {
-                        setIsFormOpen(open);
-                        if (!open) setEditingJob(null);
-                    }}
-                    onSubmit={handleSubmit}
-                    initialData={editingJob}
-                />
-            )}
+            {/* Job Form Dialog */}
+            <JobFormDialog
+                open={isFormOpen}
+                onOpenChange={(open) => {
+                    setIsFormOpen(open);
+                    if (!open) setEditingJob(null);
+                }}
+                onSubmit={handleSubmit}
+                initialData={editingJob || undefined}
+            />
+
+            {/* Job Detail Dialog */}
+            <JobDetailDialog
+                job={selectedJob}
+                client={selectedJob?.client_id ? (getClientById(selectedJob.client_id) || null) : null}
+                open={isDetailOpen}
+                onOpenChange={setIsDetailOpen}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+            />
         </div>
     );
 }

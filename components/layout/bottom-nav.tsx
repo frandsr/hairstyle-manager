@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, History, Users, Settings } from 'lucide-react';
+import { Home, Scissors, Users, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { translations } from '@/lib/i18n/es-AR';
@@ -17,7 +17,7 @@ export function BottomNav() {
         {
             label: translations.nav.historial,
             href: '/historial',
-            icon: History,
+            icon: Scissors,
         },
         {
             label: translations.nav.clientas,
@@ -44,8 +44,8 @@ export function BottomNav() {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex flex-col items-center justify-center py-3 px-2 transition-colors ${isActive
-                                        ? 'text-primary'
-                                        : 'text-muted-foreground hover:text-foreground'
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
                                 <Icon className={`h-5 w-5 ${isActive ? 'fill-current' : ''}`} />

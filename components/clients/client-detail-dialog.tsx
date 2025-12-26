@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useJobs } from '@/lib/hooks/use-jobs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatDateLong } from '@/lib/utils/date';
 import { Calendar, DollarSign, Star, TrendingUp, User, Phone, StickyNote } from 'lucide-react';
-import type { Client } from '@/lib/types/database';
+import { JobDetailDialog } from '@/components/jobs/job-detail-dialog';
+import type { Client, Job } from '@/lib/types/database';
 
 interface ClientDetailDialogProps {
     client: Client | null;
@@ -18,7 +19,9 @@ interface ClientDetailDialogProps {
 }
 
 export function ClientDetailDialog({ client, open, onOpenChange }: ClientDetailDialogProps) {
-    const { jobs } = useJobs();
+    const { jobs, deleteJob, updateJob } = useJobs();
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+    const [jobDetailOpen, setJobDetailOpen] = useState(false);
 
     // Filter jobs for this client
     const clientJobs = useMemo(() => {
@@ -160,7 +163,14 @@ export function ClientDetailDialog({ client, open, onOpenChange }: ClientDetailD
                         ) : (
                             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
                                 {clientJobs.map((job) => (
-                                    <Card key={job.id} className="hover:bg-muted/50 transition-colors">
+                                    <Card
+                                        key={job.id}
+                                        className="hover:bg-muted/50 transition-colors cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedJob(job);
+                                            setJobDetailOpen(true);
+                                        }}
+                                    >
                                         <CardContent className="p-3 space-y-2">
                                             <div className="flex items-start justify-between">
                                                 <div className="space-y-1 flex-1">
@@ -203,6 +213,22 @@ export function ClientDetailDialog({ client, open, onOpenChange }: ClientDetailD
                     </div>
                 </div>
             </DialogContent>
+
+            {/* Job Detail Dialog */}
+            <JobDetailDialog
+                job={selectedJob}
+                client={client}
+                open={jobDetailOpen}
+                onOpenChange={setJobDetailOpen}
+                onEdit={(job) => {
+                    // Handle edit - could integrate with a job form
+                    console.log('Edit job:', job);
+                }}
+                onDelete={async (jobId) => {
+                    await deleteJob(jobId);
+                    setJobDetailOpen(false);
+                }}
+            />
         </Dialog>
     );
 }
