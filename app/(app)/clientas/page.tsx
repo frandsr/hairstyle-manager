@@ -1,16 +1,25 @@
 'use client';
 
+import { useState } from 'react';
 import { useClients } from '@/lib/hooks/use-clients';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, UserPlus, Phone } from 'lucide-react';
+import { ClientDetailDialog } from '@/components/clients/client-detail-dialog';
+import { Search, UserPlus, Phone, ChevronRight } from 'lucide-react';
 import { translations } from '@/lib/i18n/es-AR';
-import { useState } from 'react';
+import type { Client } from '@/lib/types/database';
 
 export default function ClientasPage() {
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+    const [detailDialogOpen, setDetailDialogOpen] = useState(false);
     const { clients, loading } = useClients(searchQuery);
+
+    const handleClientClick = (client: Client) => {
+        setSelectedClient(client);
+        setDetailDialogOpen(true);
+    };
 
     if (loading) {
         return (
@@ -24,7 +33,7 @@ export default function ClientasPage() {
     }
 
     return (
-        <div className="container max-w-2xl mx-auto p-4 space-y-6">
+        <div className="container max-w-2xl mx-auto p-4 pb-24 space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">{translations.clients.title}</h2>
                 <Button size="sm">
@@ -54,7 +63,11 @@ export default function ClientasPage() {
                     </Card>
                 ) : (
                     clients.map((client) => (
-                        <Card key={client.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                        <Card
+                            key={client.id}
+                            className="hover:shadow-md transition-shadow cursor-pointer hover:border-primary/50"
+                            onClick={() => handleClientClick(client)}
+                        >
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1">
@@ -71,12 +84,20 @@ export default function ClientasPage() {
                                             </p>
                                         )}
                                     </div>
+                                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                 </div>
                             </CardContent>
                         </Card>
                     ))
                 )}
             </div>
+
+            {/* Client Detail Dialog */}
+            <ClientDetailDialog
+                client={selectedClient}
+                open={detailDialogOpen}
+                onOpenChange={setDetailDialogOpen}
+            />
         </div>
     );
 }

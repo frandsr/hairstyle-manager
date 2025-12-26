@@ -26,7 +26,7 @@ export function BonusProgress({
     const streakProgress = (currentStreak / maxStreak) * 100;
 
     return (
-        <div className="grid gap-4 md:grid-cols-2">
+        <>
             {/* Fixed Bonus Tier Progress */}
             <Card>
                 <CardHeader className="pb-3">
@@ -97,6 +97,6 @@ export function BonusProgress({
                     </div>
                 </CardContent>
             </Card>
-        </div>
+        </>
     );
 }

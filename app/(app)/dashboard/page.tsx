@@ -1,21 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, DollarSign, Coins, TrendingUp, Wallet } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { StatsCard } from '@/components/dashboard/stats-card';
 import { ShiftBadge } from '@/components/dashboard/shift-badge';
 import { WeekSelector } from '@/components/dashboard/week-selector';
-import { RevenueRing } from '@/components/dashboard/revenue-ring';
-import { BonusAlert } from '@/components/dashboard/bonus-alert';
+import { EarningsSummary } from '@/components/dashboard/earnings-summary';
+import { WeeklyTargetCard } from '@/components/dashboard/weekly-target-card';
 import { BonusProgress } from '@/components/dashboard/bonus-progress';
 import { JobFormDialog } from '@/components/jobs/job-form-dialog';
 import { useSettings } from '@/lib/hooks/use-settings';
 import { useWeekJobs } from '@/lib/hooks/use-jobs';
 import { getWeekBounds, navigateWeek } from '@/lib/utils/date';
 import { getCurrentShift } from '@/lib/calculations/shifts';
-import { calculateCommission, getRemainingToNextBonus, getNextBonusTier } from '@/lib/calculations/commission';
-import { calculateRevenue, calculateTips, calculateEarnings } from '@/lib/calculations/earnings';
+import { calculateCommission, getRemainingToNextBonus, getNextBonusTier, calculateFixedBonus } from '@/lib/calculations/commission';
+import { calculateRevenue, calculateTips } from '@/lib/calculations/earnings';
 import { translations } from '@/lib/i18n/es-AR';
 
 export default function DashboardPage() {
@@ -39,7 +38,9 @@ export default function DashboardPage() {
         ? calculateCommission(revenue, calculationSettings)
         : { baseCommission: 0, streakBonus: 0, totalCommission: 0 };
 
-    const totalEarnings = calculateEarnings(commission.totalCommission, tips);
+    const fixedBonuses = calculationSettings
+        ? calculateFixedBonus(revenue, calculationSettings.fixedBonusTiers)
+        : 0;
 
     const remainingToBonus = calculationSettings
         ? getRemainingToNextBonus(revenue, calculationSettings.fixedBonusTiers)
@@ -48,6 +49,12 @@ export default function DashboardPage() {
     const nextTier = calculationSettings
         ? getNextBonusTier(revenue, calculationSettings.fixedBonusTiers)
         : null;
+
+    // Calculate active commission rate (base + streak)
+    const activeCommissionRate = calculationSettings
+        ? Math.round((calculationSettings.baseCommissionRate +
+            (calculationSettings.streakBonusRate * Math.min(calculationSettings.currentStreakCount, 4))) * 100)
+        : 0;
 
     const handleNavigate = (direction: 'next' | 'prev') => {
         setCurrentDate(prev => navigateWeek(prev, direction));
@@ -80,54 +87,38 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* Revenue Ring */}
-            {settings && (
-                <div className="flex justify-center">
-                    <RevenueRing
-                        current={revenue}
+            {/* Main Earnings Summary - Most Important */}
+            <EarningsSummary
+                revenue={revenue}
+                commission={commission.totalCommission}
+                tips={tips}
+                fixedBonuses={fixedBonuses}
+                activeCommissionRate={activeCommissionRate}
+            />
+
+            {/* Progress Trackers Grid */}
+            <div className="grid gap-4 md:grid-cols-3">
+                {/* Weekly Target */}
+                {settings && (
+                    <WeeklyTargetCard
+                        revenue={revenue}
                         target={settings.weekly_target}
                     />
-                </div>
-            )}
+                )}
 
-            {/* Bonus Alert */}
-            <BonusAlert remaining={remainingToBonus} />
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-4">
-                <StatsCard
-                    title={translations.dashboard.revenue}
-                    value={revenue}
-                    icon={<DollarSign className="h-6 w-6" />}
-                />
-                <StatsCard
-                    title={translations.dashboard.commission}
-                    value={commission.totalCommission}
-                    icon={<TrendingUp className="h-6 w-6" />}
-                />
-                <StatsCard
-                    title={translations.dashboard.tips}
-                    value={tips}
-                    icon={<Coins className="h-6 w-6" />}
-                />
-                <StatsCard
-                    title={translations.dashboard.totalEarnings}
-                    value={totalEarnings}
-                    icon={<Wallet className="h-6 w-6" />}
-                    className="col-span-2"
-                />
+                {/* Bonus Progress */}
+                {settings && nextTier && (
+                    <>
+                        <BonusProgress
+                            revenue={revenue}
+                            nextTierThreshold={nextTier.threshold}
+                            nextTierBonus={nextTier.bonus}
+                            currentStreak={settings.current_streak_count}
+                            maxStreak={4}
+                        />
+                    </>
+                )}
             </div>
-
-            {/* Bonus Progress Indicators */}
-            {settings && nextTier && (
-                <BonusProgress
-                    revenue={revenue}
-                    nextTierThreshold={nextTier.threshold}
-                    nextTierBonus={nextTier.bonus}
-                    currentStreak={settings.current_streak_count}
-                    maxStreak={4}
-                />
-            )}
 
             {/* Current Streak Info */}
             {settings && settings.current_streak_count > 0 && (
