@@ -17,7 +17,7 @@ import type { Job } from '@/lib/types/database';
 
 export default function HistorialPage() {
     const { jobs, loading, deleteJob, updateJob, addJob } = useJobs();
-    const { clients, getClientById } = useClients();
+    const { clients, getClientById, refetch: refetchClients } = useClients();
     const [editingJob, setEditingJob] = useState<Job | null>(null);
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -292,6 +292,7 @@ export default function HistorialPage() {
                 }}
                 onSubmit={handleSubmit}
                 initialData={editingJob || undefined}
+                onClientAdded={refetchClients}
             />
 
             {/* Job Detail Dialog */}

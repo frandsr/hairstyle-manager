@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useClients } from '@/lib/hooks/use-clients';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ClientFormDialog } from '@/components/clients/client-form-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,13 +28,14 @@ interface JobFormDialogProps {
         tags: string[];
     }) => Promise<void>;
     initialData?: Job;
+    onClientAdded?: () => Promise<void>;
 }
 
-export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: JobFormDialogProps) {
-    const { clients, loading: clientsLoading, addClient, refetch } = useClients();
+export function JobFormDialog({ open, onOpenChange, onSubmit, initialData, onClientAdded }: JobFormDialogProps) {
+    const { clients, loading: clientsLoading, refetch } = useClients();
     const [saving, setSaving] = useState(false);
-    const [showNewClientForm, setShowNewClientForm] = useState(false);
-    const [addingClient, setAddingClient] = useState(false);
+    // const [showNewClientForm, setShowNewClientForm] = useState(false); // Removed
+    // const [addingClient, setAddingClient] = useState(false); // Removed
 
     // Form state
     const [clientId, setClientId] = useState<string>('');
@@ -45,10 +47,14 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
     const [tags, setTags] = useState<string[]>([]);
     const [customTag, setCustomTag] = useState('');
 
-    // New client form state
-    const [newClientName, setNewClientName] = useState('');
-    const [newClientPhone, setNewClientPhone] = useState('');
-    const [newClientNotes, setNewClientNotes] = useState('');
+    // Client form dialog state
+    const [clientFormOpen, setClientFormOpen] = useState(false);
+    const [lastClientCount, setLastClientCount] = useState(0);
+
+    // New client form state (Removed)
+    // const [newClientName, setNewClientName] = useState('');
+    // const [newClientPhone, setNewClientPhone] = useState('');
+    // const [newClientNotes, setNewClientNotes] = useState('');
 
     // Initialize form when initialData changes
     useEffect(() => {
@@ -70,49 +76,31 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
             setRating('5');
             setTags([]);
         }
-        setShowNewClientForm(false);
     }, [initialData, open]);
 
-    const handleAddNewClient = async () => {
-        if (!newClientName.trim()) {
-            toast.error('Ingresa el nombre de la clienta');
-            return;
-        }
-
-        try {
-            setAddingClient(true);
-
-            const newClient = await addClient({
-                name: newClientName.trim(),
-                phone: newClientPhone.trim() || null,
-                notes: newClientNotes.trim() || null,
-            });
-
-            // Refresh clients list and wait for it to complete
-            await refetch();
-
-            // Select the newly created client after refresh
-            if (newClient && 'id' in newClient) {
-                // Use setTimeout to ensure the client list has updated in the UI
-                setTimeout(() => {
-                    setClientId(newClient.id);
-                }, 100);
-            }
-
-            // Reset new client form
-            setNewClientName('');
-            setNewClientPhone('');
-            setNewClientNotes('');
-            setShowNewClientForm(false);
-
-            toast.success('Clienta agregada exitosamente');
-        } catch (error) {
-            toast.error('Error al agregar la clienta');
-            console.error(error);
-        } finally {
-            setAddingClient(false);
+    const handleClientAdded = async () => {
+        // Store current count before refreshing
+        setLastClientCount(clients.length);
+        // Refresh the client list in this component's useClients instance
+        await refetch();
+        // Also refresh parent's client list if callback provided
+        if (onClientAdded) {
+            await onClientAdded();
         }
     };
+
+    // Auto-select newest client when clients list grows
+    useEffect(() => {
+        if (lastClientCount > 0 && clients.length > lastClientCount) {
+            // New client was added, select the newest one
+            const newestClient = clients[clients.length - 1];
+            if (newestClient) {
+                setClientId(newestClient.id);
+                toast.success(`Cliente "${newestClient.name}" seleccionada`);
+            }
+            setLastClientCount(0); // Reset flag
+        }
+    }, [clients, lastClientCount]);
 
     const toggleTag = (tag: string) => {
         setTags(prev =>
@@ -136,6 +124,12 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate client selection
+        if (!clientId) {
+            toast.error('Selecciona o crea una clienta para continuar');
+            return;
+        }
 
         if (!amount || parseFloat(amount) <= 0) {
             toast.error('Ingresa un monto válido');
@@ -166,313 +160,246 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData }: Job
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>
-                        {initialData ? 'Editar Trabajo' : translations.jobs.newJob}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {initialData
-                            ? 'Modifica los detalles del trabajo realizado'
-                            : 'Registra un nuevo trabajo realizado'
-                        }
-                    </DialogDescription>
-                </DialogHeader>
+        <>
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {initialData ? 'Editar Trabajo' : translations.jobs.newJob}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {initialData
+                                ? 'Modifica los detalles del trabajo realizado'
+                                : 'Registra un nuevo trabajo realizado'
+                            }
+                        </DialogDescription>
+                    </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Client */}
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor="client">{translations.jobs.client}</Label>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setShowNewClientForm(!showNewClientForm)}
-                                className="h-7 text-xs"
-                            >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Nueva Clienta
-                            </Button>
-                        </div>
-
-                        {!showNewClientForm ? (
-                            <>
-                                <Select value={clientId} onValueChange={setClientId}>
-                                    <SelectTrigger id="client">
-                                        <SelectValue placeholder="Seleccionar clienta (opcional)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {clientsLoading ? (
-                                            <SelectItem value="loading-placeholder" disabled>
-                                                Cargando...
-                                            </SelectItem>
-                                        ) : (
-                                            clients.map((client) => (
-                                                <SelectItem key={client.id} value={client.id}>
-                                                    {client.name}
-                                                </SelectItem>
-                                            ))
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                                {clientId && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setClientId('')}
-                                        className="text-xs h-6"
-                                    >
-                                        Limpiar selección
-                                    </Button>
-                                )}
-                            </>
-                        ) : (
-                            <div className="p-3 border rounded-lg space-y-3 bg-muted/50">
-                                <div className="space-y-2">
-                                    <Label htmlFor="new-client-name" className="text-xs">
-                                        Nombre *
-                                    </Label>
-                                    <Input
-                                        id="new-client-name"
-                                        value={newClientName}
-                                        onChange={(e) => setNewClientName(e.target.value)}
-                                        placeholder="María García"
-                                        className="h-9"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="new-client-phone" className="text-xs">
-                                        Teléfono
-                                    </Label>
-                                    <Input
-                                        id="new-client-phone"
-                                        value={newClientPhone}
-                                        onChange={(e) => setNewClientPhone(e.target.value)}
-                                        placeholder="+54 11 1234-5678"
-                                        className="h-9"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="new-client-notes" className="text-xs">
-                                        Notas
-                                    </Label>
-                                    <Input
-                                        id="new-client-notes"
-                                        value={newClientNotes}
-                                        onChange={(e) => setNewClientNotes(e.target.value)}
-                                        placeholder="Preferencias, alergias, etc."
-                                        className="h-9"
-                                    />
-                                </div>
-                                <div className="flex gap-2 pt-1">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            setShowNewClientForm(false);
-                                            setNewClientName('');
-                                            setNewClientPhone('');
-                                            setNewClientNotes('');
-                                        }}
-                                        className="flex-1"
-                                        disabled={addingClient}
-                                    >
-                                        Cancelar
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        onClick={handleAddNewClient}
-                                        className="flex-1"
-                                        disabled={addingClient}
-                                    >
-                                        {addingClient ? (
-                                            <>
-                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                Agregando...
-                                            </>
-                                        ) : (
-                                            'Agregar'
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Amount */}
-                    <div className="space-y-2">
-                        <Label htmlFor="amount">{translations.jobs.amount} *</Label>
-                        <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">$</span>
-                            <Input
-                                id="amount"
-                                type="number"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                placeholder="25000"
-                                required
-                                min="0"
-                                max="10000000"
-                                step="1"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Tip */}
-                    <div className="space-y-2">
-                        <Label htmlFor="tip">{translations.jobs.tip}</Label>
-                        <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">$</span>
-                            <Input
-                                id="tip"
-                                type="number"
-                                value={tipAmount}
-                                onChange={(e) => setTipAmount(e.target.value)}
-                                placeholder="0"
-                                min="0"
-                                max="10000000"
-                                step="1"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Date */}
-                    <div className="space-y-2">
-                        <Label htmlFor="date">{translations.jobs.date} *</Label>
-                        <Input
-                            id="date"
-                            type="date"
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            required
-                        />
-                    </div>
-
-                    {/* Description */}
-                    <div className="space-y-2">
-                        <Label htmlFor="description">{translations.jobs.description}</Label>
-                        <Input
-                            id="description"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Corte y color"
-                        />
-                    </div>
-
-                    {/* Tags */}
-                    <div className="space-y-2">
-                        <Label>Etiquetas</Label>
-
-                        {/* Selected tags */}
-                        {tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 p-2 border rounded-md bg-muted/30">
-                                {tags.map(tag => (
-                                    <Badge
-                                        key={tag}
-                                        variant="secondary"
-                                        className="gap-1 pr-1"
-                                    >
-                                        {tag}
-                                        <button
-                                            type="button"
-                                            onClick={() => removeTag(tag)}
-                                            className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
-                                        >
-                                            <X className="h-3 w-3" />
-                                        </button>
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Common tags */}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Client */}
                         <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">Etiquetas comunes:</p>
-                            <div className="flex flex-wrap gap-2">
-                                {COMMON_TAGS.map(tag => (
-                                    <Badge
-                                        key={tag}
-                                        variant={tags.includes(tag) ? "default" : "outline"}
-                                        className="cursor-pointer hover:opacity-80"
-                                        onClick={() => toggleTag(tag)}
-                                    >
-                                        {tag}
-                                    </Badge>
-                                ))}
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="client">{translations.jobs.client} *</Label>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setClientFormOpen(true)}
+                                    className="h-7 text-xs"
+                                >
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    Nueva Clienta
+                                </Button>
+                            </div>
+
+                            <Select value={clientId} onValueChange={setClientId}>
+                                <SelectTrigger id="client">
+                                    <SelectValue placeholder="Seleccionar clienta (opcional)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {clientsLoading ? (
+                                        <SelectItem value="loading-placeholder" disabled>
+                                            Cargando...
+                                        </SelectItem>
+                                    ) : (
+                                        clients.map((client) => (
+                                            <SelectItem key={client.id} value={client.id}>
+                                                {client.name}
+                                            </SelectItem>
+                                        ))
+                                    )}
+                                </SelectContent>
+                            </Select>
+                            {clientId && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setClientId('')}
+                                    className="text-xs h-6"
+                                >
+                                    Limpiar selección
+                                </Button>
+                            )}
+                        </div>
+
+                        {/* Amount */}
+                        <div className="space-y-2">
+                            <Label htmlFor="amount">{translations.jobs.amount} *</Label>
+                            <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">$</span>
+                                <Input
+                                    id="amount"
+                                    type="number"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder="25000"
+                                    required
+                                    min="0"
+                                    max="10000000"
+                                    step="1"
+                                />
                             </div>
                         </div>
 
-                        {/* Custom tag input */}
-                        <div className="flex gap-2">
+                        {/* Tip */}
+                        <div className="space-y-2">
+                            <Label htmlFor="tip">{translations.jobs.tip}</Label>
+                            <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">$</span>
+                                <Input
+                                    id="tip"
+                                    type="number"
+                                    value={tipAmount}
+                                    onChange={(e) => setTipAmount(e.target.value)}
+                                    placeholder="0"
+                                    min="0"
+                                    max="10000000"
+                                    step="1"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Date */}
+                        <div className="space-y-2">
+                            <Label htmlFor="date">{translations.jobs.date} *</Label>
                             <Input
-                                placeholder="Agregar etiqueta personalizada..."
-                                value={customTag}
-                                onChange={(e) => setCustomTag(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        addCustomTag();
-                                    }
-                                }}
+                                id="date"
+                                type="date"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                                required
                             />
+                        </div>
+
+                        {/* Description */}
+                        <div className="space-y-2">
+                            <Label htmlFor="description">{translations.jobs.description}</Label>
+                            <Input
+                                id="description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Corte y color"
+                            />
+                        </div>
+
+                        {/* Tags */}
+                        <div className="space-y-2">
+                            <Label>Etiquetas</Label>
+
+                            {/* Selected tags */}
+                            {tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 p-2 border rounded-md bg-muted/30">
+                                    {tags.map(tag => (
+                                        <Badge
+                                            key={tag}
+                                            variant="secondary"
+                                            className="gap-1 pr-1"
+                                        >
+                                            {tag}
+                                            <button
+                                                type="button"
+                                                onClick={() => removeTag(tag)}
+                                                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </Badge>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Common tags */}
+                            <div className="space-y-2">
+                                <p className="text-sm text-muted-foreground">Etiquetas comunes:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {COMMON_TAGS.map(tag => (
+                                        <Badge
+                                            key={tag}
+                                            variant={tags.includes(tag) ? "default" : "outline"}
+                                            className="cursor-pointer hover:opacity-80"
+                                            onClick={() => toggleTag(tag)}
+                                        >
+                                            {tag}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Custom tag input */}
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Agregar etiqueta personalizada..."
+                                    value={customTag}
+                                    onChange={(e) => setCustomTag(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            addCustomTag();
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={addCustomTag}
+                                    disabled={!customTag.trim()}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Rating */}
+                        <div className="space-y-2">
+                            <Label htmlFor="rating">{translations.jobs.rating}</Label>
+                            <Select value={rating} onValueChange={setRating}>
+                                <SelectTrigger id="rating">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="5">⭐⭐⭐⭐⭐ Excelente</SelectItem>
+                                    <SelectItem value="4">⭐⭐⭐⭐ Muy bueno</SelectItem>
+                                    <SelectItem value="3">⭐⭐⭐ Bueno</SelectItem>
+                                    <SelectItem value="2">⭐⭐ Regular</SelectItem>
+                                    <SelectItem value="1">⭐ Malo</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-3 pt-4">
                             <Button
                                 type="button"
                                 variant="outline"
-                                size="icon"
-                                onClick={addCustomTag}
-                                disabled={!customTag.trim()}
+                                onClick={() => onOpenChange(false)}
+                                className="flex-1"
+                                disabled={saving}
                             >
-                                <Plus className="h-4 w-4" />
+                                {translations.common.cancel}
+                            </Button>
+                            <Button type="submit" className="flex-1" disabled={saving}>
+                                {saving ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Guardando...
+                                    </>
+                                ) : (
+                                    translations.common.save
+                                )}
                             </Button>
                         </div>
-                    </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
-                    {/* Rating */}
-                    <div className="space-y-2">
-                        <Label htmlFor="rating">{translations.jobs.rating}</Label>
-                        <Select value={rating} onValueChange={setRating}>
-                            <SelectTrigger id="rating">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="5">⭐⭐⭐⭐⭐ Excelente</SelectItem>
-                                <SelectItem value="4">⭐⭐⭐⭐ Muy bueno</SelectItem>
-                                <SelectItem value="3">⭐⭐⭐ Bueno</SelectItem>
-                                <SelectItem value="2">⭐⭐ Regular</SelectItem>
-                                <SelectItem value="1">⭐ Malo</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-3 pt-4">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                            className="flex-1"
-                            disabled={saving}
-                        >
-                            {translations.common.cancel}
-                        </Button>
-                        <Button type="submit" className="flex-1" disabled={saving}>
-                            {saving ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    Guardando...
-                                </>
-                            ) : (
-                                translations.common.save
-                            )}
-                        </Button>
-                    </div>
-                </form>
-            </DialogContent>
-        </Dialog>
+            {/* Nested Client Form Dialog */}
+            <ClientFormDialog
+                open={clientFormOpen}
+                onOpenChange={setClientFormOpen}
+                onSuccess={handleClientAdded}
+            />
+        </>
     );
 }

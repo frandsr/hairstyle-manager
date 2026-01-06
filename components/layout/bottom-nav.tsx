@@ -16,7 +16,7 @@ export function BottomNav() {
         },
         {
             label: translations.nav.historial,
-            href: '/historial',
+            href: '/jobs',
             icon: Scissors,
         },
         {
