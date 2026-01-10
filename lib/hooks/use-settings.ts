@@ -50,7 +50,6 @@ export function useSettings() {
                             weekly_target: 150000,
                             base_commission_rate: 0.40,
                             streak_bonus_rate: 0.05,
-                            shift_pattern_start: new Date().toISOString(),
                             effective_from: new Date().toISOString(),
                             effective_to: null
                         })
@@ -71,7 +70,6 @@ export function useSettings() {
                     current_streak_count: data.current_streak_count,
                     fixed_bonus_tiers: data.fixed_bonus_tiers,
                     week_start_day: data.week_start_day,
-                    shift_pattern_start: data.shift_pattern_start,
                     created_at: data.created_at,
                     updated_at: data.updated_at,
                 };
@@ -143,7 +141,6 @@ export function useSettings() {
                     current_streak_count: data.current_streak_count,
                     fixed_bonus_tiers: data.fixed_bonus_tiers,
                     week_start_day: data.week_start_day,
-                    shift_pattern_start: data.shift_pattern_start,
                     created_at: data.created_at,
                     updated_at: data.updated_at,
                 };
@@ -194,7 +191,6 @@ export function useSettings() {
                             current_streak_count: updates.current_streak_count ?? currentSettings?.current_streak_count ?? 0,
                             fixed_bonus_tiers: updates.fixed_bonus_tiers ?? currentSettings?.fixed_bonus_tiers ?? [],
                             week_start_day: updates.week_start_day ?? currentSettings?.week_start_day ?? 1,
-                            shift_pattern_start: updates.shift_pattern_start ?? currentSettings?.shift_pattern_start ?? new Date().toISOString(),
                             current_shift: updates.current_shift ?? null,
                             effective_from: nextSaturdayISO,
                             effective_to: null

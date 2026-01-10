@@ -29,7 +29,6 @@ export interface Database {
                     current_streak_count: number;
                     fixed_bonus_tiers: BonusTier[];
                     week_start_day: number;
-                    shift_pattern_start: string;
                     created_at: string;
                     updated_at: string;
                 };
@@ -67,7 +66,6 @@ export interface Database {
                     current_streak_count: number;
                     fixed_bonus_tiers: BonusTier[];
                     week_start_day: number;
-                    shift_pattern_start: string;
                     current_shift: 'morning' | 'afternoon' | null;
                     effective_from: string;
                     effective_to: string | null;
@@ -83,7 +81,6 @@ export interface Database {
                     current_streak_count?: number;
                     fixed_bonus_tiers?: BonusTier[];
                     week_start_day?: number;
-                    shift_pattern_start: string;
                     current_shift?: 'morning' | 'afternoon' | null;
                     effective_from: string;
                     effective_to?: string | null;
@@ -97,7 +94,6 @@ export interface Database {
                     current_streak_count?: number;
                     fixed_bonus_tiers?: BonusTier[];
                     week_start_day?: number;
-                    shift_pattern_start?: string;
                     current_shift?: 'morning' | 'afternoon' | null;
                     effective_from?: string;
                     effective_to?: string | null;

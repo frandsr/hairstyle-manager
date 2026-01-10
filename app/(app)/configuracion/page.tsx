@@ -26,7 +26,6 @@ export default function ConfiguracionPage() {
     const [baseCommission, setBaseCommission] = useState('');
     const [streakBonus, setStreakBonus] = useState('');
     const [bonusTiers, setBonusTiers] = useState<BonusTier[]>([]);
-    const [shiftStartDate, setShiftStartDate] = useState('');
     const [currentShift, setCurrentShift] = useState<'morning' | 'afternoon' | null>(null);
     const [applyTo, setApplyTo] = useState<ApplyTo>('next_week');
 
@@ -37,7 +36,6 @@ export default function ConfiguracionPage() {
             setBaseCommission((settings.base_commission_rate * 100).toString());
             setStreakBonus((settings.streak_bonus_rate * 100).toString());
             setBonusTiers([...settings.fixed_bonus_tiers]);
-            setShiftStartDate(settings.shift_pattern_start.split('T')[0]);
         }
     }, [settings]);
 
@@ -67,7 +65,6 @@ export default function ConfiguracionPage() {
                 base_commission_rate: parseFloat(baseCommission) / 100 || 0,
                 streak_bonus_rate: parseFloat(streakBonus) / 100 || 0,
                 fixed_bonus_tiers: sortedTiers,
-                shift_pattern_start: new Date(shiftStartDate).toISOString(),
                 current_shift: currentShift,
             }, applyTo);
 
@@ -276,30 +273,6 @@ export default function ConfiguracionPage() {
                 </CardContent>
             </Card>
 
-            {/* Shift Pattern */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Patrón de Turnos</CardTitle>
-                    <CardDescription>
-                        Fecha de inicio del ciclo de turnos rotativos
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        <Label htmlFor="shift-start">{translations.settings.shiftPatternStart}</Label>
-                        <Input
-                            id="shift-start"
-                            type="date"
-                            value={shiftStartDate}
-                            onChange={(e) => setShiftStartDate(e.target.value)}
-                        />
-                        <p className="text-sm text-muted-foreground">
-                            Los turnos rotan semanalmente: semana par = mañana, semana impar = tarde
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
-
             {/* Shift Override */}
             <Card>
                 <CardHeader>
@@ -386,6 +359,6 @@ export default function ConfiguracionPage() {
                     {translations.auth.signOut}
                 </Button>
             </div>
-        </div>
+        </div >
     );
 }

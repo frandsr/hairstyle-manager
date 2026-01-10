@@ -27,7 +27,7 @@ export default function DashboardPage() {
 
     // Calculate shift with manual override support
     const currentShift = settings
-        ? getCurrentShift(currentDate, new Date(settings.shift_pattern_start), settings.current_shift || undefined)
+        ? getCurrentShift(currentDate, new Date(settings.effective_from), settings.current_shift || undefined)
         : null;
 
     // Calculate financial metrics
@@ -106,13 +106,14 @@ export default function DashboardPage() {
                     />
                 )}
 
+
                 {/* Bonus Progress */}
-                {settings && nextTier && (
+                {settings && calculationSettings && (
                     <>
                         <BonusProgress
                             revenue={revenue}
-                            nextTierThreshold={nextTier.threshold}
-                            nextTierBonus={nextTier.bonus}
+                            nextTierThreshold={nextTier?.threshold || 0}
+                            nextTierBonus={nextTier?.bonus || 0}
                             currentStreak={settings.current_streak_count}
                             maxStreak={4}
                         />

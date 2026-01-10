@@ -17,7 +17,6 @@ export const mockSettings: Settings = {
         { threshold: 300000, bonus: 50000 },
     ],
     week_start_day: 6, // Saturday
-    shift_pattern_start: '2024-01-06', // A Saturday
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
 };
