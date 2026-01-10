@@ -110,178 +110,181 @@ export default function HistorialPage() {
         );
     }
 
-    if (jobs.length === 0 && !searchQuery) {
-        return (
-            <div className="container max-w-2xl mx-auto p-4 pb-24">
-                <h1 className="text-3xl font-bold mb-6">{translations.nav.historial}</h1>
-                <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                        <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground text-center">
-                            No hay trabajos registrados aún.
-                            <br />
-                            <span className="text-sm">Usa el botón + para agregar tu primer trabajo.</span>
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+    const isEmptyState = jobs.length === 0 && !searchQuery;
 
     return (
         <div className="container max-w-2xl mx-auto p-4 pb-24 space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold">{translations.jobs.title}</h1>
-                <Button onClick={handleNewJob} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    {translations.jobs.newJob}
-                </Button>
+                {!isEmptyState && (
+                    <Button onClick={handleNewJob} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        {translations.jobs.newJob}
+                    </Button>
+                )}
             </div>
 
-            {/* Search */}
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder={translations.jobs.search}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                />
-            </div>
-
-            {/* Results count */}
-            {searchQuery && (
-                <div className="text-sm text-muted-foreground">
-                    {filteredJobs.length} {filteredJobs.length === 1 ? 'resultado' : 'resultados'}
-                </div>
-            )}
-
-            {/* Empty state for search */}
-            {filteredJobs.length === 0 && searchQuery && (
+            {isEmptyState ? (
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12">
-                        <Search className="h-12 w-12 text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground text-center">
-                            No se encontraron trabajos para "{searchQuery}"
+                        <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground text-center mb-4">
+                            No hay trabajos registrados aún.
                         </p>
+                        <Button onClick={handleNewJob} variant="default">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Agregar primer trabajo
+                        </Button>
                     </CardContent>
                 </Card>
-            )}
+            ) : (
+                <>
+                    {/* Search */}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder={translations.jobs.search}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10"
+                        />
+                    </div>
 
-            {/* Jobs grouped by date */}
-            <div className="space-y-6">
-                {sortedDates.map((date) => {
-                    const dayJobs = groupedJobs[date];
-                    const dayTotal = dayJobs.reduce((sum, job) => sum + job.amount, 0);
-                    const dayTips = dayJobs.reduce((sum, job) => sum + job.tip_amount, 0);
+                    {/* Results count */}
+                    {searchQuery && (
+                        <div className="text-sm text-muted-foreground">
+                            {filteredJobs.length} {filteredJobs.length === 1 ? 'resultado' : 'resultados'}
+                        </div>
+                    )}
 
-                    return (
-                        <div key={date} className="space-y-3">
-                            {/* Date Header */}
-                            <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 py-2">
-                                <div className="flex items-baseline justify-between">
-                                    <h2 className="text-lg font-semibold">
-                                        {formatDateLong(new Date(date + 'T12:00:00'))}
-                                    </h2>
-                                    <div className="text-sm text-muted-foreground">
-                                        {formatCurrency(dayTotal)}
-                                        {dayTips > 0 && (
-                                            <span className="text-xs ml-1">
-                                                + {formatCurrency(dayTips)} propina
-                                            </span>
-                                        )}
+                    {/* Empty state for search */}
+                    {filteredJobs.length === 0 && searchQuery && (
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center py-12">
+                                <Search className="h-12 w-12 text-muted-foreground mb-4" />
+                                <p className="text-muted-foreground text-center">
+                                    No se encontraron trabajos para "{searchQuery}"
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Jobs grouped by date */}
+                    <div className="space-y-6">
+                        {sortedDates.map((date) => {
+                            const dayJobs = groupedJobs[date];
+                            const dayTotal = dayJobs.reduce((sum, job) => sum + job.amount, 0);
+                            const dayTips = dayJobs.reduce((sum, job) => sum + job.tip_amount, 0);
+
+                            return (
+                                <div key={date} className="space-y-3">
+                                    {/* Date Header */}
+                                    <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 py-2">
+                                        <div className="flex items-baseline justify-between">
+                                            <h2 className="text-lg font-semibold">
+                                                {formatDateLong(new Date(date + 'T12:00:00'))}
+                                            </h2>
+                                            <div className="text-sm text-muted-foreground">
+                                                {formatCurrency(dayTotal)}
+                                                {dayTips > 0 && (
+                                                    <span className="text-xs ml-1">
+                                                        + {formatCurrency(dayTips)} propina
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Jobs for this day */}
+                                    <div className="space-y-3">
+                                        {dayJobs.map((job) => {
+                                            const client = job.client_id ? getClientById(job.client_id) : null;
+
+                                            return (
+                                                <Card
+                                                    key={job.id}
+                                                    className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                                                    onClick={() => handleViewDetails(job)}
+                                                >
+                                                    <CardContent className="p-4 space-y-3">
+                                                        {/* Main Info */}
+                                                        <div className="flex items-start justify-between">
+                                                            <div className="flex-1 space-y-1">
+                                                                {client && (
+                                                                    <div className="flex items-center gap-2 text-sm">
+                                                                        <User className="h-4 w-4 text-muted-foreground" />
+                                                                        <span className="font-medium">{client.name}</span>
+                                                                    </div>
+                                                                )}
+
+                                                                <div className="flex items-center gap-2">
+                                                                    <DollarSign className="h-4 w-4 text-green-600" />
+                                                                    <span className="text-lg font-bold">
+                                                                        {formatCurrency(job.amount)}
+                                                                    </span>
+                                                                    {job.tip_amount > 0 && (
+                                                                        <span className="text-sm text-muted-foreground">
+                                                                            + {formatCurrency(job.tip_amount)} propina
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                {job.description && (
+                                                                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                                                                        <StickyNote className="h-4 w-4 mt-0.5" />
+                                                                        <span className="line-clamp-1">{job.description}</span>
+                                                                    </div>
+                                                                )}
+
+                                                                {job.rating && (
+                                                                    <div className="flex items-center gap-2">
+                                                                        {renderStars(job.rating)}
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Tags */}
+                                                                {job.tags && job.tags.length > 0 && (
+                                                                    <div className="flex flex-wrap gap-1 mt-2">
+                                                                        {job.tags.map(tag => (
+                                                                            <Badge key={tag} variant="secondary" className="text-xs">
+                                                                                {tag}
+                                                                            </Badge>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Actions */}
+                                                            <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => handleEdit(job)}
+                                                                    className="h-8 w-8"
+                                                                >
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => handleDelete(job.id)}
+                                                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            );
+                                        })}
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Jobs for this day */}
-                            <div className="space-y-3">
-                                {dayJobs.map((job) => {
-                                    const client = job.client_id ? getClientById(job.client_id) : null;
-
-                                    return (
-                                        <Card
-                                            key={job.id}
-                                            className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                                            onClick={() => handleViewDetails(job)}
-                                        >
-                                            <CardContent className="p-4 space-y-3">
-                                                {/* Main Info */}
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex-1 space-y-1">
-                                                        {client && (
-                                                            <div className="flex items-center gap-2 text-sm">
-                                                                <User className="h-4 w-4 text-muted-foreground" />
-                                                                <span className="font-medium">{client.name}</span>
-                                                            </div>
-                                                        )}
-
-                                                        <div className="flex items-center gap-2">
-                                                            <DollarSign className="h-4 w-4 text-green-600" />
-                                                            <span className="text-lg font-bold">
-                                                                {formatCurrency(job.amount)}
-                                                            </span>
-                                                            {job.tip_amount > 0 && (
-                                                                <span className="text-sm text-muted-foreground">
-                                                                    + {formatCurrency(job.tip_amount)} propina
-                                                                </span>
-                                                            )}
-                                                        </div>
-
-                                                        {job.description && (
-                                                            <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                                                                <StickyNote className="h-4 w-4 mt-0.5" />
-                                                                <span className="line-clamp-1">{job.description}</span>
-                                                            </div>
-                                                        )}
-
-                                                        {job.rating && (
-                                                            <div className="flex items-center gap-2">
-                                                                {renderStars(job.rating)}
-                                                            </div>
-                                                        )}
-
-                                                        {/* Tags */}
-                                                        {job.tags && job.tags.length > 0 && (
-                                                            <div className="flex flex-wrap gap-1 mt-2">
-                                                                {job.tags.map(tag => (
-                                                                    <Badge key={tag} variant="secondary" className="text-xs">
-                                                                        {tag}
-                                                                    </Badge>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Actions */}
-                                                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => handleEdit(job)}
-                                                            className="h-8 w-8"
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => handleDelete(job.id)}
-                                                            className="h-8 w-8 text-destructive hover:text-destructive"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+                            );
+                        })}
+                    </div>
+                </>
+            )}
 
             {/* Job Form Dialog */}
             <JobFormDialog

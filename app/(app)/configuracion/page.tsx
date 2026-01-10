@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { supabase, isMockAuthMode } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import { useSettings } from '@/lib/hooks/use-settings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,8 +15,10 @@ import { toast } from 'sonner';
 import type { BonusTier } from '@/lib/types/database';
 
 export default function ConfiguracionPage() {
+    const router = useRouter();
     const { settings, loading, updateSettings } = useSettings();
     const [saving, setSaving] = useState(false);
+    const [signingOut, setSigningOut] = useState(false);
 
     // Form state
     const [weeklyTarget, setWeeklyTarget] = useState('');
@@ -69,6 +73,26 @@ export default function ConfiguracionPage() {
             console.error(error);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            setSigningOut(true);
+
+            // Only sign out if not in mock auth mode
+            if (!isMockAuthMode()) {
+                await supabase.auth.signOut();
+            }
+
+            // Redirect to login
+            router.push('/login');
+            toast.success('Sesión cerrada exitosamente');
+        } catch (error) {
+            console.error('Error signing out:', error);
+            toast.error('Error al cerrar sesión');
+        } finally {
+            setSigningOut(false);
         }
     };
 
@@ -275,8 +299,12 @@ export default function ConfiguracionPage() {
                     )}
                 </Button>
 
-                <Button variant="outline" className="gap-2">
-                    <LogOut className="h-4 w-4" />
+                <Button variant="outline" className="gap-2" onClick={handleSignOut} disabled={signingOut}>
+                    {signingOut ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <LogOut className="h-4 w-4" />
+                    )}
                     {translations.auth.signOut}
                 </Button>
             </div>

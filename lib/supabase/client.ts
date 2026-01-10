@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
 
 // Get environment variables
@@ -13,8 +13,8 @@ const isValidKey = envKey && envKey.length > 20 && !envKey.includes('your-supaba
 const supabaseUrl = isValidUrl ? envUrl : 'https://placeholder.supabase.co';
 const supabaseAnonKey = isValidKey ? envKey : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTIwMDAsImV4cCI6MTk2MDc2ODAwMH0.placeholder';
 
-// Create Supabase client
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+// Create Supabase client using SSR-compatible browser client
+export const supabase = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Mock user data for development
 export const mockUser = {

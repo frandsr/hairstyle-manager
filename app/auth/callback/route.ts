@@ -1,0 +1,51 @@
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export async function GET(request: NextRequest) {
+    const requestUrl = new URL(request.url);
+    const code = requestUrl.searchParams.get('code');
+
+    if (code) {
+        const cookieStore = await cookies();
+
+        // Create response for redirect
+        const response = NextResponse.redirect(new URL('/dashboard', request.url));
+
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    get(name: string) {
+                        return cookieStore.get(name)?.value;
+                    },
+                    set(name: string, value: string, options: CookieOptions) {
+                        // Set cookie on both the request store and response
+                        cookieStore.set({ name, value, ...options });
+                        response.cookies.set({ name, value, ...options });
+                    },
+                    remove(name: string, options: CookieOptions) {
+                        // Remove cookie from both the request store and response
+                        cookieStore.set({ name, value: '', ...options });
+                        response.cookies.set({ name, value: '', ...options });
+                    },
+                },
+            }
+        );
+
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (error) {
+            console.error('Error exchanging code for session:', error);
+            // Redirect to login on error
+            return NextResponse.redirect(new URL('/login?error=auth_failed', request.url));
+        }
+
+        return response;
+    }
+
+    // No code provided, redirect to login
+    return NextResponse.redirect(new URL('/login', request.url));
+}
