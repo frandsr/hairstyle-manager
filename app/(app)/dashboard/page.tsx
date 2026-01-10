@@ -112,6 +112,7 @@ export default function DashboardPage() {
                     <>
                         <BonusProgress
                             revenue={revenue}
+                            allTiers={calculationSettings.fixedBonusTiers}
                             nextTierThreshold={nextTier?.threshold || 0}
                             nextTierBonus={nextTier?.bonus || 0}
                             currentStreak={settings.current_streak_count}
