@@ -48,10 +48,15 @@ export function useJobs(startDate?: Date, endDate?: Date) {
                     .order('date', { ascending: false });
 
                 if (startDate) {
-                    query = query.gte('date', startDate.toISOString());
+                    // Use date-only format (YYYY-MM-DD) to avoid timezone issues
+                    // This matches jobs created on the local date regardless of time
+                    const dateStr = startDate.toISOString().split('T')[0];
+                    query = query.gte('date', dateStr);
                 }
                 if (endDate) {
-                    query = query.lte('date', endDate.toISOString());
+                    // Use date-only format for end date as well
+                    const dateStr = endDate.toISOString().split('T')[0];
+                    query = query.lte('date', dateStr);
                 }
 
                 const { data, error } = await query;

@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase, isMockAuthMode } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { useSettings } from '@/lib/hooks/use-settings';
+import { useSettings, type ApplyTo } from '@/lib/hooks/use-settings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { translations } from '@/lib/i18n/es-AR';
 import { formatCurrency } from '@/lib/utils/currency';
 import { Loader2, Plus, Trash2, Save, LogOut } from 'lucide-react';
@@ -16,7 +17,7 @@ import type { BonusTier } from '@/lib/types/database';
 
 export default function ConfiguracionPage() {
     const router = useRouter();
-    const { settings, loading, updateSettings } = useSettings();
+    const { settings, loading, error, updateSettingsWithEffectiveDate, refetch } = useSettings();
     const [saving, setSaving] = useState(false);
     const [signingOut, setSigningOut] = useState(false);
 
@@ -26,9 +27,11 @@ export default function ConfiguracionPage() {
     const [streakBonus, setStreakBonus] = useState('');
     const [bonusTiers, setBonusTiers] = useState<BonusTier[]>([]);
     const [shiftStartDate, setShiftStartDate] = useState('');
+    const [currentShift, setCurrentShift] = useState<'morning' | 'afternoon' | null>(null);
+    const [applyTo, setApplyTo] = useState<ApplyTo>('next_week');
 
     // Initialize form when settings load
-    useState(() => {
+    useEffect(() => {
         if (settings) {
             setWeeklyTarget(settings.weekly_target.toString());
             setBaseCommission((settings.base_commission_rate * 100).toString());
@@ -36,7 +39,7 @@ export default function ConfiguracionPage() {
             setBonusTiers([...settings.fixed_bonus_tiers]);
             setShiftStartDate(settings.shift_pattern_start.split('T')[0]);
         }
-    });
+    }, [settings]);
 
     const handleAddTier = () => {
         setBonusTiers([...bonusTiers, { threshold: 0, bonus: 0 }]);
@@ -59,13 +62,14 @@ export default function ConfiguracionPage() {
             // Sort bonus tiers by threshold
             const sortedTiers = [...bonusTiers].sort((a, b) => a.threshold - b.threshold);
 
-            await updateSettings({
+            await updateSettingsWithEffectiveDate({
                 weekly_target: parseFloat(weeklyTarget) || 0,
                 base_commission_rate: parseFloat(baseCommission) / 100 || 0,
                 streak_bonus_rate: parseFloat(streakBonus) / 100 || 0,
                 fixed_bonus_tiers: sortedTiers,
-                shift_pattern_start: shiftStartDate,
-            });
+                shift_pattern_start: new Date(shiftStartDate).toISOString(),
+                current_shift: currentShift,
+            }, applyTo);
 
             toast.success(translations.settings.saved);
         } catch (error) {
@@ -95,6 +99,19 @@ export default function ConfiguracionPage() {
             setSigningOut(false);
         }
     };
+
+    // Handle error state
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] p-4 text-center">
+                <p className="text-red-500 mb-4">Error al cargar la configuración</p>
+                <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
+                <Button onClick={() => refetch()} variant="outline">
+                    Reintentar
+                </Button>
+            </div>
+        );
+    }
 
     if (loading || !settings) {
         return (
@@ -280,6 +297,67 @@ export default function ConfiguracionPage() {
                             Los turnos rotan semanalmente: semana par = mañana, semana impar = tarde
                         </p>
                     </div>
+                </CardContent>
+            </Card>
+
+            {/* Shift Override */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Turno Actual</CardTitle>
+                    <CardDescription>
+                        Anula el cálculo automático si hay un cambio excepcional
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <RadioGroup
+                        value={currentShift || 'auto'}
+                        onValueChange={(val) => setCurrentShift(val === 'auto' ? null : val as 'morning' | 'afternoon')}
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="auto" id="auto" />
+                            <Label htmlFor="auto">
+                                Automático (basado en patrón)
+                            </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="morning" id="morning" />
+                            <Label htmlFor="morning">
+                                ☀️ Turno Mañana (forzar esta semana)
+                            </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="afternoon" id="afternoon" />
+                            <Label htmlFor="afternoon">
+                                🌙 Turno Tarde (forzar esta semana)
+                            </Label>
+                        </div>
+                    </RadioGroup>
+                </CardContent>
+            </Card>
+
+            {/* Apply To */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>¿Cuándo aplicar los cambios?</CardTitle>
+                    <CardDescription>
+                        Elige si los cambios afectan esta semana o la próxima
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <RadioGroup value={applyTo} onValueChange={(val) => setApplyTo(val as ApplyTo)}>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="current_week" id="current" />
+                            <Label htmlFor="current">
+                                Esta semana (aplica retroactivamente desde el sábado)
+                            </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="next_week" id="next" />
+                            <Label htmlFor="next">
+                                Próxima semana (desde el próximo sábado)
+                            </Label>
+                        </div>
+                    </RadioGroup>
                 </CardContent>
             </Card>
 

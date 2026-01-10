@@ -9,7 +9,7 @@ import { EarningsSummary } from '@/components/dashboard/earnings-summary';
 import { WeeklyTargetCard } from '@/components/dashboard/weekly-target-card';
 import { BonusProgress } from '@/components/dashboard/bonus-progress';
 import { JobFormDialog } from '@/components/jobs/job-form-dialog';
-import { useSettings } from '@/lib/hooks/use-settings';
+import { useWeeklySettings } from '@/lib/hooks/use-weekly-settings';
 import { useWeekJobs } from '@/lib/hooks/use-jobs';
 import { getWeekBounds, navigateWeek } from '@/lib/utils/date';
 import { getCurrentShift } from '@/lib/calculations/shifts';
@@ -22,12 +22,12 @@ export default function DashboardPage() {
     const [jobFormOpen, setJobFormOpen] = useState(false);
     const { start, end } = getWeekBounds(currentDate);
 
-    const { settings, calculationSettings, loading: settingsLoading } = useSettings();
+    const { settings, calculationSettings, loading: settingsLoading } = useWeeklySettings(currentDate);
     const { jobs, loading: jobsLoading, addJob } = useWeekJobs(currentDate);
 
-    // Calculate shift
+    // Calculate shift with manual override support
     const currentShift = settings
-        ? getCurrentShift(currentDate, new Date(settings.shift_pattern_start))
+        ? getCurrentShift(currentDate, new Date(settings.shift_pattern_start), settings.current_shift || undefined)
         : null;
 
     // Calculate financial metrics

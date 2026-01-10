@@ -57,6 +57,53 @@ export interface Database {
                     updated_at?: string;
                 };
             };
+            settings_history: {
+                Row: {
+                    id: string;
+                    user_id: string;
+                    weekly_target: number;
+                    base_commission_rate: number;
+                    streak_bonus_rate: number;
+                    current_streak_count: number;
+                    fixed_bonus_tiers: BonusTier[];
+                    week_start_day: number;
+                    shift_pattern_start: string;
+                    current_shift: 'morning' | 'afternoon' | null;
+                    effective_from: string;
+                    effective_to: string | null;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    user_id: string;
+                    weekly_target: number;
+                    base_commission_rate: number;
+                    streak_bonus_rate: number;
+                    current_streak_count?: number;
+                    fixed_bonus_tiers?: BonusTier[];
+                    week_start_day?: number;
+                    shift_pattern_start: string;
+                    current_shift?: 'morning' | 'afternoon' | null;
+                    effective_from: string;
+                    effective_to?: string | null;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    weekly_target?: number;
+                    base_commission_rate?: number;
+                    streak_bonus_rate?: number;
+                    current_streak_count?: number;
+                    fixed_bonus_tiers?: BonusTier[];
+                    week_start_day?: number;
+                    shift_pattern_start?: string;
+                    current_shift?: 'morning' | 'afternoon' | null;
+                    effective_from?: string;
+                    effective_to?: string | null;
+                    updated_at?: string;
+                };
+            };
             clients: {
                 Row: {
                     id: string;
@@ -139,6 +186,7 @@ export interface BonusTier {
 // Convenience types
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type Settings = Database['public']['Tables']['settings']['Row'];
+export type SettingsHistory = Database['public']['Tables']['settings_history']['Row'];
 export type Client = Database['public']['Tables']['clients']['Row'];
 export type Job = Database['public']['Tables']['jobs']['Row'];
 
