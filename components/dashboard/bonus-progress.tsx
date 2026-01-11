@@ -14,6 +14,7 @@ interface BonusProgressProps {
     nextTierThreshold: number;
     nextTierBonus: number;
     currentStreak: number;
+    streakBonusThreshold: number;
     maxStreak?: number;
 }
 
@@ -23,6 +24,7 @@ export function BonusProgress({
     nextTierThreshold,
     nextTierBonus,
     currentStreak,
+    streakBonusThreshold,
     maxStreak = 4
 }: BonusProgressProps) {
     const tierProgress = nextTierThreshold > 0
@@ -114,22 +116,49 @@ export function BonusProgress({
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    <div className="space-y-2">
-                        <div className="flex items-baseline justify-between text-sm">
-                            <span className="text-muted-foreground">Racha actual</span>
-                            <span className="font-semibold">{currentStreak} de {maxStreak} semanas</span>
+                    {/* Threshold progress */}
+                    {streakBonusThreshold > 0 && (
+                        <div className="space-y-2">
+                            <p className="text-xs text-muted-foreground font-medium">Meta para Activar Racha</p>
+                            <div className="flex items-baseline justify-between text-sm">
+                                <span className="text-muted-foreground">Umbral</span>
+                                <span className="font-semibold">{formatCurrency(streakBonusThreshold)}</span>
+                            </div>
+                            <Progress
+                                value={Math.min((revenue / streakBonusThreshold) * 100, 100)}
+                                className="h-2"
+                            />
+                            <div className="flex items-baseline justify-between text-xs">
+                                <span className="text-muted-foreground">Actual: {formatCurrency(revenue)}</span>
+                                <span className={`font-medium ${revenue >= streakBonusThreshold ? 'text-green-600' : 'text-purple-600'}`}>
+                                    {revenue >= streakBonusThreshold
+                                        ? '✓ ¡Alcanzado!'
+                                        : `Faltan ${formatCurrency(streakBonusThreshold - revenue)}`}
+                                </span>
+                            </div>
                         </div>
-                        <Progress value={streakProgress} className="h-2" />
-                        <div className="flex items-baseline justify-between text-xs">
-                            <span className="text-muted-foreground">
-                                {currentStreak === 0 ? 'Alcanza tu meta esta semana' : 'Sigue así para más bonos'}
-                            </span>
-                            <span className={`font-medium ${currentStreak >= maxStreak ? 'text-green-600' : 'text-purple-600'
-                                }`}>
-                                {currentStreak >= maxStreak ? '¡Máximo!' : `+${maxStreak - currentStreak} posibles`}
-                            </span>
+                    )}
+
+                    {/* Current streak info */}
+                    <div className={streakBonusThreshold > 0 ? 'pt-2 border-t' : ''}>
+                        <div className="space-y-2">
+                            <div className="flex items-baseline justify-between text-sm">
+                                <span className="text-muted-foreground">Racha actual</span>
+                                <span className="font-semibold">{currentStreak} de {maxStreak} semanas</span>
+                            </div>
+                            <Progress value={streakProgress} className="h-2" />
+                            <div className="flex items-baseline justify-between text-xs">
+                                <span className="text-muted-foreground">
+                                    {currentStreak === 0 ? 'Alcanza la meta para empezar' : 'Sigue así para más bonos'}
+                                </span>
+                                <span className={`font-medium ${currentStreak >= maxStreak ? 'text-green-600' : 'text-purple-600'}`}>
+                                    {currentStreak >= maxStreak ? '¡Máximo!' : `+${maxStreak - currentStreak} posibles`}
+                                </span>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Bonus info */}
                     <div className="pt-2 border-t">
                         <div className="flex items-center justify-between">
                             <span className="text-xs text-muted-foreground">Bono por semana</span>

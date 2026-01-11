@@ -26,6 +26,7 @@ export interface Database {
                     weekly_target: number;
                     base_commission_rate: number;
                     streak_bonus_rate: number;
+                    streak_bonus_threshold: number;
                     current_streak_count: number;
                     fixed_bonus_tiers: BonusTier[];
                     week_start_day: number;
@@ -38,6 +39,7 @@ export interface Database {
                     weekly_target: number;
                     base_commission_rate: number;
                     streak_bonus_rate: number;
+                    streak_bonus_threshold?: number;
                     current_streak_count?: number;
                     fixed_bonus_tiers?: BonusTier[];
                     week_start_day?: number;
@@ -49,10 +51,11 @@ export interface Database {
                     weekly_target?: number;
                     base_commission_rate?: number;
                     streak_bonus_rate?: number;
+                    streak_bonus_threshold?: number;
                     current_streak_count?: number;
                     fixed_bonus_tiers?: BonusTier[];
                     week_start_day?: number;
-                    shift_pattern_start?: string;
+                    created_at?: string;
                     updated_at?: string;
                 };
             };
@@ -63,6 +66,7 @@ export interface Database {
                     weekly_target: number;
                     base_commission_rate: number;
                     streak_bonus_rate: number;
+                    streak_bonus_threshold: number;
                     current_streak_count: number;
                     fixed_bonus_tiers: BonusTier[];
                     week_start_day: number;
@@ -78,6 +82,7 @@ export interface Database {
                     weekly_target: number;
                     base_commission_rate: number;
                     streak_bonus_rate: number;
+                    streak_bonus_threshold?: number;
                     current_streak_count?: number;
                     fixed_bonus_tiers?: BonusTier[];
                     week_start_day?: number;
@@ -91,13 +96,14 @@ export interface Database {
                     weekly_target?: number;
                     base_commission_rate?: number;
                     streak_bonus_rate?: number;
+                    streak_bonus_threshold?: number;
                     current_streak_count?: number;
                     fixed_bonus_tiers?: BonusTier[];
                     week_start_day?: number;
                     current_shift?: 'morning' | 'afternoon' | null;
                     effective_from?: string;
                     effective_to?: string | null;
-                    updated_at?: string;
+                    created_at?: string;
                 };
             };
             clients: {

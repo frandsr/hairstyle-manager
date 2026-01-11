@@ -25,6 +25,7 @@ export default function ConfiguracionPage() {
     const [weeklyTarget, setWeeklyTarget] = useState('');
     const [baseCommission, setBaseCommission] = useState('');
     const [streakBonus, setStreakBonus] = useState('');
+    const [streakThreshold, setStreakThreshold] = useState('');
     const [bonusTiers, setBonusTiers] = useState<BonusTier[]>([]);
     const [currentShift, setCurrentShift] = useState<'morning' | 'afternoon' | null>(null);
     const [applyTo, setApplyTo] = useState<ApplyTo>('next_week');
@@ -35,6 +36,7 @@ export default function ConfiguracionPage() {
             setWeeklyTarget(settings.weekly_target.toString());
             setBaseCommission((settings.base_commission_rate * 100).toString());
             setStreakBonus((settings.streak_bonus_rate * 100).toString());
+            setStreakThreshold((settings.streak_bonus_threshold || 0).toString());
             setBonusTiers([...settings.fixed_bonus_tiers]);
         }
     }, [settings]);
@@ -64,6 +66,7 @@ export default function ConfiguracionPage() {
                 weekly_target: parseFloat(weeklyTarget) || 0,
                 base_commission_rate: parseFloat(baseCommission) / 100 || 0,
                 streak_bonus_rate: parseFloat(streakBonus) / 100 || 0,
+                streak_bonus_threshold: parseFloat(streakThreshold) || 0,
                 fixed_bonus_tiers: sortedTiers,
                 current_shift: currentShift,
             }, applyTo);
@@ -201,6 +204,24 @@ export default function ConfiguracionPage() {
                         </div>
                         <p className="text-sm text-muted-foreground">
                             Actual: {(settings.streak_bonus_rate * 100).toFixed(0)}% por semana (máx 4 semanas)
+                        </p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="streak-threshold">Meta para Racha</Label>
+                        <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground text-xl">$</span>
+                            <Input
+                                id="streak-threshold"
+                                type="number"
+                                value={streakThreshold}
+                                onChange={(e) => setStreakThreshold(e.target.value)}
+                                placeholder="500000"
+                                className="flex-1"
+                            />
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            Facturación mínima para activar el bono por racha. Actual: {formatCurrency(settings.streak_bonus_threshold || 0)}
                         </p>
                     </div>
 

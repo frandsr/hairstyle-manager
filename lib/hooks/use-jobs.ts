@@ -5,6 +5,7 @@ import { isMockAuthMode, mockStore } from '../supabase/mock-data';
 import { supabase, mockUser } from '../supabase/client';
 import type { Job, NewJob, UpdateJob } from '../types/database';
 import { getWeekBounds } from '../utils/date';
+import { updateStreakIfNeeded } from '../utils/streak';
 
 export function useJobs(startDate?: Date, endDate?: Date) {
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -84,6 +85,9 @@ export function useJobs(startDate?: Date, endDate?: Date) {
 
                 mockStore.jobs = [newJob, ...mockStore.jobs];
                 await fetchJobs();
+
+                // Update streak after adding job
+                await updateStreakIfNeeded();
             } else {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) throw new Error('Not authenticated');
@@ -94,6 +98,9 @@ export function useJobs(startDate?: Date, endDate?: Date) {
 
                 if (error) throw error;
                 await fetchJobs();
+
+                // Update streak after adding job
+                await updateStreakIfNeeded();
             }
         } catch (err) {
             setError(err as Error);
@@ -108,6 +115,9 @@ export function useJobs(startDate?: Date, endDate?: Date) {
                     job.id === id ? { ...job, ...updates, updated_at: new Date().toISOString() } : job
                 );
                 await fetchJobs();
+
+                // Update streak after updating job
+                await updateStreakIfNeeded();
             } else {
                 const { error } = await supabase
                     .from('jobs')
@@ -128,6 +138,9 @@ export function useJobs(startDate?: Date, endDate?: Date) {
             if (isMockAuthMode()) {
                 mockStore.jobs = mockStore.jobs.filter(job => job.id !== id);
                 await fetchJobs();
+
+                // Update streak after deleting job
+                await updateStreakIfNeeded();
             } else {
                 const { error } = await supabase
                     .from('jobs')

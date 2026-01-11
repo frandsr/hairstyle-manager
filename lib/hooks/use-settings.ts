@@ -50,6 +50,7 @@ export function useSettings() {
                             weekly_target: 150000,
                             base_commission_rate: 0.40,
                             streak_bonus_rate: 0.05,
+                            streak_bonus_threshold: 0,
                             effective_from: new Date().toISOString(),
                             effective_to: null
                         })
@@ -67,6 +68,7 @@ export function useSettings() {
                     weekly_target: data.weekly_target,
                     base_commission_rate: data.base_commission_rate,
                     streak_bonus_rate: data.streak_bonus_rate,
+                    streak_bonus_threshold: data.streak_bonus_threshold || 0,
                     current_streak_count: data.current_streak_count,
                     fixed_bonus_tiers: data.fixed_bonus_tiers,
                     week_start_day: data.week_start_day,
@@ -138,6 +140,7 @@ export function useSettings() {
                     weekly_target: data.weekly_target,
                     base_commission_rate: data.base_commission_rate,
                     streak_bonus_rate: data.streak_bonus_rate,
+                    streak_bonus_threshold: data.streak_bonus_threshold || 0,
                     current_streak_count: data.current_streak_count,
                     fixed_bonus_tiers: data.fixed_bonus_tiers,
                     week_start_day: data.week_start_day,

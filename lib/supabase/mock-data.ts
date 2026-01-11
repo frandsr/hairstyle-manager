@@ -10,6 +10,7 @@ export const mockSettings: Settings = {
     weekly_target: 150000, // $150,000 ARS weekly target
     base_commission_rate: 0.40, // 40% base commission
     streak_bonus_rate: 0.05, // 5% per week bonus
+    streak_bonus_threshold: 500000,
     current_streak_count: 2, // Currently on a 2-week streak
     fixed_bonus_tiers: [
         { threshold: 100000, bonus: 10000 },

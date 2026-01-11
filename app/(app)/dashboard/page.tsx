@@ -116,6 +116,7 @@ export default function DashboardPage() {
                             nextTierThreshold={nextTier?.threshold || 0}
                             nextTierBonus={nextTier?.bonus || 0}
                             currentStreak={settings.current_streak_count}
+                            streakBonusThreshold={calculationSettings.streakBonusThreshold || 0}
                             maxStreak={4}
                         />
                     </>

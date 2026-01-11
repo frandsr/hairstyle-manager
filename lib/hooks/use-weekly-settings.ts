@@ -86,6 +86,7 @@ export function useWeeklySettings(weekDate: Date) {
         weeklyTarget: settings.weekly_target,
         baseCommissionRate: settings.base_commission_rate,
         streakBonusRate: settings.streak_bonus_rate,
+        streakBonusThreshold: settings.streak_bonus_threshold,
         currentStreakCount: settings.current_streak_count,
         fixedBonusTiers: settings.fixed_bonus_tiers,
     } : null;
