@@ -137,7 +137,7 @@ export function useSettings() {
             // Update in place
             const { data, error } = await supabase
                 .from('settings_history')
-                .update({ ...updates, updated_at: new Date().toISOString() })
+                .update({ ...updates, updated_at: new Date().toISOString() } as any)
                 .eq('id', activeRecord.id)
                 .select()
                 .single();

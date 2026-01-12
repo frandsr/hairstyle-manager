@@ -101,7 +101,7 @@ export function useClients(searchQuery?: string) {
             } else {
                 const { error } = await supabase
                     .from('clients')
-                    .update(updates)
+                    .update(updates as any)
                     .eq('id', id);
 
                 if (error) throw error;

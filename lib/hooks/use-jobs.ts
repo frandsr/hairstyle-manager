@@ -148,7 +148,7 @@ export function useJobs(startDate?: Date, endDate?: Date) {
 
                 const { error } = await supabase
                     .from('jobs')
-                    .update(updates)
+                    .update(updates as any)
                     .eq('id', id);
 
                 if (error) throw error;
