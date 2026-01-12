@@ -137,11 +137,13 @@ export function useSettings() {
             if (!activeRecord) throw new Error('No active settings found for current week');
 
             // Update in place
+            // Cast to any due to Supabase type inference issue
+            const activeRecordAny = activeRecord as any;
             const { data, error } = await supabase
                 .from('settings_history')
                 // @ts-ignore - Supabase type inference issue
                 .update({ ...updates, updated_at: new Date().toISOString() })
-                .eq('id', activeRecord.id)
+                .eq('id', activeRecordAny.id)
                 .select()
                 .single();
 
