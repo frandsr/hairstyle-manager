@@ -137,7 +137,8 @@ export function useSettings() {
             // Update in place
             const { data, error } = await supabase
                 .from('settings_history')
-                .update({ ...updates, updated_at: new Date().toISOString() } as any)
+                // @ts-ignore - Supabase type inference issue
+                .update({ ...updates, updated_at: new Date().toISOString() })
                 .eq('id', activeRecord.id)
                 .select()
                 .single();

@@ -77,7 +77,8 @@ export function useClients(searchQuery?: string) {
 
                 const { data, error } = await supabase
                     .from('clients')
-                    .insert({ ...client, user_id: user.id } as any)
+                    // @ts-ignore - Supabase type inference issue
+                    .insert({ ...client, user_id: user.id })
                     .select()
                     .single();
 
@@ -101,7 +102,8 @@ export function useClients(searchQuery?: string) {
             } else {
                 const { error } = await supabase
                     .from('clients')
-                    .update(updates as any)
+                    // @ts-ignore - Supabase type inference issue
+                    .update(updates)
                     .eq('id', id);
 
                 if (error) throw error;

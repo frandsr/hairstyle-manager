@@ -97,7 +97,8 @@ export function useJobs(startDate?: Date, endDate?: Date) {
 
                 const { error } = await supabase
                     .from('jobs')
-                    .insert({ ...job, user_id: user.id } as any);
+                    // @ts-ignore - Supabase type inference issue
+                    .insert({ ...job, user_id: user.id });
 
                 if (error) throw error;
                 await fetchJobs();
@@ -138,6 +139,7 @@ export function useJobs(startDate?: Date, endDate?: Date) {
                 if (!user) throw new Error('Not authenticated');
 
                 // Get old job data to check if date changed
+                // @ts-ignore - Supabase type inference issue
                 const { data: oldJob } = await supabase
                     .from('jobs')
                     .select('date')
@@ -148,7 +150,8 @@ export function useJobs(startDate?: Date, endDate?: Date) {
 
                 const { error } = await supabase
                     .from('jobs')
-                    .update(updates as any)
+                    // @ts-ignore - Supabase type inference issue
+                    .update(updates)
                     .eq('id', id);
 
                 if (error) throw error;
