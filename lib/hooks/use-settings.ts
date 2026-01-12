@@ -66,20 +66,21 @@ export function useSettings() {
             console.log('[fetchSettings] Settings found, converting to Settings type');
 
             // Convert SettingsHistory to Settings (keeping types compatible)
-            // @ts-ignore - existingSettings typed as never due to Supabase issue
+            // Cast to any due to Supabase type inference issue
+            const existingSettingsAny = existingSettings as any;
             const settingsData: Settings = {
-                id: existingSettings.id,
-                user_id: existingSettings.user_id,
-                weekly_target: existingSettings.weekly_target,
-                base_commission_rate: existingSettings.base_commission_rate,
-                streak_bonus_rate: existingSettings.streak_bonus_rate,
-                streak_bonus_threshold: existingSettings.streak_bonus_threshold || 0,
-                streak_threshold_met: existingSettings.streak_threshold_met,
-                fixed_bonus_tiers: existingSettings.fixed_bonus_tiers,
-                week_start_day: existingSettings.week_start_day,
-                current_shift: existingSettings.current_shift,
-                created_at: existingSettings.created_at,
-                updated_at: existingSettings.updated_at,
+                id: existingSettingsAny.id,
+                user_id: existingSettingsAny.user_id,
+                weekly_target: existingSettingsAny.weekly_target,
+                base_commission_rate: existingSettingsAny.base_commission_rate,
+                streak_bonus_rate: existingSettingsAny.streak_bonus_rate,
+                streak_bonus_threshold: existingSettingsAny.streak_bonus_threshold || 0,
+                streak_threshold_met: existingSettingsAny.streak_threshold_met,
+                fixed_bonus_tiers: existingSettingsAny.fixed_bonus_tiers,
+                week_start_day: existingSettingsAny.week_start_day,
+                current_shift: existingSettingsAny.current_shift,
+                created_at: existingSettingsAny.created_at,
+                updated_at: existingSettingsAny.updated_at,
             };
 
             console.log('[fetchSettings] Setting settings state:', settingsData);
@@ -147,20 +148,21 @@ export function useSettings() {
             if (error) throw error;
 
             // Update local state
-            // @ts-ignore - data typed as never due to Supabase issue
+            // Cast to any due to Supabase type inference issue
+            const dataAny = data as any;
             const settingsData: Settings = {
-                id: data.id,
-                user_id: data.user_id,
-                weekly_target: data.weekly_target,
-                base_commission_rate: data.base_commission_rate,
-                streak_bonus_rate: data.streak_bonus_rate,
-                streak_bonus_threshold: data.streak_bonus_threshold || 0,
-                streak_threshold_met: data.streak_threshold_met,
-                fixed_bonus_tiers: data.fixed_bonus_tiers,
-                week_start_day: data.week_start_day,
-                current_shift: data.current_shift,
-                created_at: data.created_at,
-                updated_at: data.updated_at,
+                id: dataAny.id,
+                user_id: dataAny.user_id,
+                weekly_target: dataAny.weekly_target,
+                base_commission_rate: dataAny.base_commission_rate,
+                streak_bonus_rate: dataAny.streak_bonus_rate,
+                streak_bonus_threshold: dataAny.streak_bonus_threshold || 0,
+                streak_threshold_met: dataAny.streak_threshold_met,
+                fixed_bonus_tiers: dataAny.fixed_bonus_tiers,
+                week_start_day: dataAny.week_start_day,
+                current_shift: dataAny.current_shift,
+                created_at: dataAny.created_at,
+                updated_at: dataAny.updated_at,
             };
             setSettings(settingsData);
             console.log('[useSettings] Updated settings state:', settingsData);
