@@ -50,7 +50,7 @@ export { formatFullDate as formatDateLong, formatShortDate as formatDateShort };
  * Used for shift rotation calculation
  */
 export function getWeeksSince(startDate: Date, currentDate: Date = new Date()): number {
-    return Math.abs(differenceInWeeks(currentDate, startDate, { weekStartsOn: WEEK_START_DAY }));
+    return Math.abs(differenceInWeeks(currentDate, startDate));
 }
 
 /**
