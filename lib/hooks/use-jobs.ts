@@ -146,6 +146,7 @@ export function useJobs(startDate?: Date, endDate?: Date) {
                     .eq('id', id)
                     .single();
 
+                // @ts-ignore - oldJob typed as never due to Supabase issue
                 const oldDate = oldJob?.date;
 
                 const { error } = await supabase
