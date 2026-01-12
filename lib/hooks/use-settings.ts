@@ -66,6 +66,7 @@ export function useSettings() {
             console.log('[fetchSettings] Settings found, converting to Settings type');
 
             // Convert SettingsHistory to Settings (keeping types compatible)
+            // @ts-ignore - existingSettings typed as never due to Supabase issue
             const settingsData: Settings = {
                 id: existingSettings.id,
                 user_id: existingSettings.user_id,
@@ -146,6 +147,7 @@ export function useSettings() {
             if (error) throw error;
 
             // Update local state
+            // @ts-ignore - data typed as never due to Supabase issue
             const settingsData: Settings = {
                 id: data.id,
                 user_id: data.user_id,
