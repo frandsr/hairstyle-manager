@@ -73,7 +73,7 @@ export function SetupModal() {
                     streak_threshold_met: false,
                     effective_from: weekStart.toISOString(),
                     effective_to: weekEnd.toISOString(),
-                });
+                } as any); // Type assertion needed due to Supabase type inference
 
             if (error) throw error;
 
