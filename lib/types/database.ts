@@ -159,6 +159,7 @@ export type Settings = {
     streak_threshold_met: boolean;
     fixed_bonus_tiers: BonusTier[];
     week_start_day: number;
+    current_shift: 'morning' | 'afternoon' | null;
     created_at: string;
     updated_at: string;
 };

@@ -45,6 +45,7 @@ export function useSettings() {
                 streak_threshold_met: currentWeekSettings.streak_threshold_met,
                 fixed_bonus_tiers: currentWeekSettings.fixed_bonus_tiers,
                 week_start_day: currentWeekSettings.week_start_day,
+                current_shift: currentWeekSettings.current_shift,
                 created_at: currentWeekSettings.created_at,
                 updated_at: currentWeekSettings.updated_at,
             };
@@ -109,6 +110,7 @@ export function useSettings() {
                 streak_threshold_met: data.streak_threshold_met,
                 fixed_bonus_tiers: data.fixed_bonus_tiers,
                 week_start_day: data.week_start_day,
+                current_shift: data.current_shift,
                 created_at: data.created_at,
                 updated_at: data.updated_at,
             };

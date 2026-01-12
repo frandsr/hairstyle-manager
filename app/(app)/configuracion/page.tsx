@@ -27,7 +27,7 @@ export default function ConfiguracionPage() {
     const [streakBonus, setStreakBonus] = useState('');
     const [streakThreshold, setStreakThreshold] = useState('');
     const [bonusTiers, setBonusTiers] = useState<BonusTier[]>([]);
-    const [currentShift, setCurrentShift] = useState<'morning' | 'afternoon' | null>(null);
+    const [currentShift, setCurrentShift] = useState<'morning' | 'afternoon'>('morning');
 
     // Initialize form when settings load
     useEffect(() => {
@@ -37,6 +37,8 @@ export default function ConfiguracionPage() {
             setStreakBonus((settings.streak_bonus_rate * 100).toString());
             setStreakThreshold((settings.streak_bonus_threshold || 0).toString());
             setBonusTiers([...settings.fixed_bonus_tiers]);
+            // Set current shift from DB, default to morning if null
+            setCurrentShift(settings.current_shift || 'morning');
         }
     }, [settings]);
 
@@ -286,35 +288,29 @@ export default function ConfiguracionPage() {
                 </CardContent>
             </Card>
 
-            {/* Shift Override */}
+            {/* Shift Selection */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Turno Actual</CardTitle>
+                    <CardTitle>Turno de Trabajo</CardTitle>
                     <CardDescription>
-                        Anula el cálculo automático si hay un cambio excepcional
+                        El turno se alterna automáticamente cada semana. Puedes cambiarlo manualmente aquí si es necesario.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <RadioGroup
-                        value={currentShift || 'auto'}
-                        onValueChange={(val) => setCurrentShift(val === 'auto' ? null : val as 'morning' | 'afternoon')}
+                        value={currentShift}
+                        onValueChange={(val) => setCurrentShift(val as 'morning' | 'afternoon')}
                     >
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="auto" id="auto" />
-                            <Label htmlFor="auto">
-                                Automático (basado en patrón)
-                            </Label>
-                        </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="morning" id="morning" />
                             <Label htmlFor="morning">
-                                ☀️ Turno Mañana (forzar esta semana)
+                                ☀️ Turno Mañana
                             </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="afternoon" id="afternoon" />
                             <Label htmlFor="afternoon">
-                                🌙 Turno Tarde (forzar esta semana)
+                                🌙 Turno Tarde
                             </Label>
                         </div>
                     </RadioGroup>
