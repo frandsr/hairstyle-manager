@@ -15,6 +15,18 @@ export function useSettings() {
 
     useEffect(() => {
         fetchSettings();
+
+        // Listen for settings updates from other components
+        const handleSettingsUpdate = (event: CustomEvent) => {
+            console.log('[useSettings] Received settings-updated event:', event.detail);
+            setSettings(event.detail);
+        };
+
+        window.addEventListener('settings-updated', handleSettingsUpdate as EventListener);
+
+        return () => {
+            window.removeEventListener('settings-updated', handleSettingsUpdate as EventListener);
+        };
     }, []);
 
     async function fetchSettings() {
@@ -61,10 +73,23 @@ export function useSettings() {
 
     async function updateSettings(updates: Partial<Omit<SettingsHistory, 'id' | 'user_id' | 'effective_from' | 'effective_to' | 'created_at' | 'updated_at'>>) {
         try {
+            console.log('[useSettings] updateSettings called with:', updates);
+
             if (isMockAuthMode()) {
-                // Update mock data
-                mockStore.settings = { ...mockStore.settings, ...updates };
-                setSettings(mockStore.settings);
+                // Create completely new object to ensure React detects the change
+                const newSettings = {
+                    ...mockStore.settings,
+                    ...updates,
+                    updated_at: new Date().toISOString() // Force new timestamp
+                };
+                mockStore.settings = newSettings;
+                console.log('[useSettings] Updated mockStore.settings:', newSettings);
+                setSettings(newSettings);
+                console.log('[useSettings] Called setSettings with new object reference');
+
+                // Dispatch custom event to notify other components
+                window.dispatchEvent(new CustomEvent('settings-updated', { detail: newSettings }));
+                console.log('[useSettings] Dispatched settings-updated event');
                 return;
             }
 
@@ -115,6 +140,11 @@ export function useSettings() {
                 updated_at: data.updated_at,
             };
             setSettings(settingsData);
+            console.log('[useSettings] Updated settings state:', settingsData);
+
+            // Dispatch custom event to notify other components
+            window.dispatchEvent(new CustomEvent('settings-updated', { detail: settingsData }));
+            console.log('[useSettings] Dispatched settings-updated event');
         } catch (err) {
             setError(err as Error);
             throw err;

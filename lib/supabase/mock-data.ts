@@ -18,6 +18,7 @@ export const mockSettings: Settings = {
         { threshold: 300000, bonus: 50000 },
     ],
     week_start_day: 6, // Saturday
+    current_shift: 'morning' as const, // Default to morning shift
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
 };
