@@ -97,7 +97,7 @@ export function useJobs(startDate?: Date, endDate?: Date) {
 
                 const { error } = await supabase
                     .from('jobs')
-                    .insert({ ...job, user_id: user.id });
+                    .insert({ ...job, user_id: user.id } as any);
 
                 if (error) throw error;
                 await fetchJobs();

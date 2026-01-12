@@ -77,7 +77,7 @@ export function useClients(searchQuery?: string) {
 
                 const { data, error } = await supabase
                     .from('clients')
-                    .insert({ ...client, user_id: user.id })
+                    .insert({ ...client, user_id: user.id } as any)
                     .select()
                     .single();
 
