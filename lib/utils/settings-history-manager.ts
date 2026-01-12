@@ -54,21 +54,24 @@ export async function ensureSettingsHistoryForWeek(
         .limit(1)
         .maybeSingle();
 
+    // Cast to any due to Supabase type inference issue
+    const prevSettingsAny = previousSettings as any;
+
     // Prepare new settings
     const newSettings = previousSettings
         ? {
             // Copy from previous week
             user_id: userId,
-            weekly_target: previousSettings.weekly_target,
-            base_commission_rate: previousSettings.base_commission_rate,
-            streak_bonus_rate: previousSettings.streak_bonus_rate,
-            streak_bonus_threshold: previousSettings.streak_bonus_threshold,
-            fixed_bonus_tiers: previousSettings.fixed_bonus_tiers,
-            week_start_day: previousSettings.week_start_day,
+            weekly_target: prevSettingsAny.weekly_target,
+            base_commission_rate: prevSettingsAny.base_commission_rate,
+            streak_bonus_rate: prevSettingsAny.streak_bonus_rate,
+            streak_bonus_threshold: prevSettingsAny.streak_bonus_threshold,
+            fixed_bonus_tiers: prevSettingsAny.fixed_bonus_tiers,
+            week_start_day: prevSettingsAny.week_start_day,
             // Toggle shift from previous week
-            current_shift: previousSettings.current_shift === 'morning'
+            current_shift: prevSettingsAny.current_shift === 'morning'
                 ? 'afternoon' as const
-                : previousSettings.current_shift === 'afternoon'
+                : prevSettingsAny.current_shift === 'afternoon'
                     ? 'morning' as const
                     : null,
             // Reset streak threshold met
@@ -93,6 +96,7 @@ export async function ensureSettingsHistoryForWeek(
 
     const { data: createdSettings, error } = await supabase
         .from('settings_history')
+        // @ts-ignore - Supabase type inference issue
         .insert(newSettings)
         .select()
         .single();
@@ -136,6 +140,7 @@ export async function calculateAndUpdateStreakStatus(
 
     if (jobsError) throw jobsError;
 
+    // @ts-ignore - jobs typed as never due to Supabase issue
     const totalRevenue = (jobs || []).reduce((sum, job) => sum + job.amount, 0);
 
     // Get settings for this week
@@ -155,14 +160,18 @@ export async function calculateAndUpdateStreakStatus(
         return;
     }
 
+    // Cast to any due to Supabase type inference issue
+    const settingsAny = settings as any;
+
     // Calculate if threshold is met
-    const thresholdMet = totalRevenue >= settings.streak_bonus_threshold;
+    const thresholdMet = totalRevenue >= settingsAny.streak_bonus_threshold;
 
     // Update the streak_threshold_met field
     const { error: updateError } = await supabase
         .from('settings_history')
+        // @ts-ignore - Supabase type inference issue
         .update({ streak_threshold_met: thresholdMet })
-        .eq('id', settings.id);
+        .eq('id', settingsAny.id);
 
     if (updateError) throw updateError;
 }
@@ -204,6 +213,7 @@ export async function calculateCurrentStreakCount(
     // Start from the most recent week (index 0 = current week)
     // Count consecutive weeks where threshold was met
     for (let i = 0; i < settingsHistory.length; i++) {
+        // @ts-ignore - settingsHistory typed as never due to Supabase issue
         if (settingsHistory[i].streak_threshold_met) {
             streakCount++;
         } else {
