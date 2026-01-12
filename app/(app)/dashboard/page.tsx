@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ShiftBadge } from '@/components/dashboard/shift-badge';
@@ -15,15 +15,41 @@ import { getWeekBounds, navigateWeek } from '@/lib/utils/date';
 import { getCurrentShift } from '@/lib/calculations/shifts';
 import { calculateCommission, getRemainingToNextBonus, getNextBonusTier, calculateFixedBonus } from '@/lib/calculations/commission';
 import { calculateRevenue, calculateTips } from '@/lib/calculations/earnings';
+import { calculateCurrentStreakCount } from '@/lib/utils/settings-history-manager';
+import { supabase, mockUser } from '@/lib/supabase/client';
+import { isMockAuthMode } from '@/lib/supabase/mock-data';
 import { translations } from '@/lib/i18n/es-AR';
 
 export default function DashboardPage() {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [jobFormOpen, setJobFormOpen] = useState(false);
+    const [currentStreakCount, setCurrentStreakCount] = useState(0);
     const { start, end } = getWeekBounds(currentDate);
 
     const { settings, calculationSettings, loading: settingsLoading } = useWeeklySettings(currentDate);
     const { jobs, loading: jobsLoading, addJob } = useWeekJobs(currentDate);
+
+    // Calculate current streak count dynamically
+    useEffect(() => {
+        async function loadStreakCount() {
+            try {
+                if (isMockAuthMode()) {
+                    // For mock mode, simple calculation
+                    setCurrentStreakCount(1);
+                    return;
+                }
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
+                const streakCount = await calculateCurrentStreakCount(user.id, currentDate);
+                setCurrentStreakCount(streakCount);
+            } catch (error) {
+                console.error('Error calculating streak:', error);
+                setCurrentStreakCount(0);
+            }
+        }
+        loadStreakCount();
+    }, [currentDate, jobs]); // Recalculate when date changes or jobs change
 
     // Calculate shift with manual override support
     const currentShift = settings
@@ -35,8 +61,8 @@ export default function DashboardPage() {
     const tips = calculateTips(jobs);
 
     const commission = calculationSettings
-        ? calculateCommission(revenue, calculationSettings)
-        : { baseCommission: 0, streakBonus: 0, totalCommission: 0 };
+        ? calculateCommission(revenue, calculationSettings, currentStreakCount)
+        : { baseCommission: 0, streakBonus: 0, totalCommission: 0, streakApplied: false };
 
     const fixedBonuses = calculationSettings
         ? calculateFixedBonus(revenue, calculationSettings.fixedBonusTiers)
@@ -53,7 +79,7 @@ export default function DashboardPage() {
     // Calculate active commission rate (base + streak)
     const activeCommissionRate = calculationSettings
         ? Math.round((calculationSettings.baseCommissionRate +
-            (calculationSettings.streakBonusRate * Math.min(calculationSettings.currentStreakCount, 4))) * 100)
+            (calculationSettings.streakBonusRate * Math.min(currentStreakCount, 4))) * 100)
         : 0;
 
     const handleNavigate = (direction: 'next' | 'prev') => {
@@ -115,7 +141,7 @@ export default function DashboardPage() {
                             allTiers={calculationSettings.fixedBonusTiers}
                             nextTierThreshold={nextTier?.threshold || 0}
                             nextTierBonus={nextTier?.bonus || 0}
-                            currentStreak={settings.current_streak_count}
+                            currentStreak={currentStreakCount}
                             streakBonusThreshold={calculationSettings.streakBonusThreshold || 0}
                             maxStreak={4}
                         />
@@ -124,10 +150,10 @@ export default function DashboardPage() {
             </div>
 
             {/* Current Streak Info */}
-            {settings && settings.current_streak_count > 0 && (
+            {currentStreakCount > 0 && (
                 <div className="text-center p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
                     <p className="text-sm font-medium text-purple-900">
-                        {translations.dashboard.currentStreak.replace('{count}', settings.current_streak_count.toString())}
+                        {translations.dashboard.currentStreak.replace('{count}', currentStreakCount.toString())}
                     </p>
                 </div>
             )}

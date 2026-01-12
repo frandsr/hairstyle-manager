@@ -81,13 +81,12 @@ export function useWeeklySettings(weekDate: Date) {
         }
     }
 
-    // Convert to calculation format
+    // Convert to calculation format (no streak count - calculated separately)
     const calculationSettings: SettingsCalc | null = settings ? {
         weeklyTarget: settings.weekly_target,
         baseCommissionRate: settings.base_commission_rate,
         streakBonusRate: settings.streak_bonus_rate,
         streakBonusThreshold: settings.streak_bonus_threshold,
-        currentStreakCount: settings.current_streak_count,
         fixedBonusTiers: settings.fixed_bonus_tiers,
     } : null;
 

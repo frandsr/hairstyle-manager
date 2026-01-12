@@ -11,7 +11,7 @@ export const mockSettings: Settings = {
     base_commission_rate: 0.40, // 40% base commission
     streak_bonus_rate: 0.05, // 5% per week bonus
     streak_bonus_threshold: 500000,
-    current_streak_count: 2, // Currently on a 2-week streak
+    streak_threshold_met: true, // Mock data has threshold met
     fixed_bonus_tiers: [
         { threshold: 100000, bonus: 10000 },
         { threshold: 200000, bonus: 25000 },

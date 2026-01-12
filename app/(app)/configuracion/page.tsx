@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, isMockAuthMode } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { useSettings, type ApplyTo } from '@/lib/hooks/use-settings';
+import { useSettings } from '@/lib/hooks/use-settings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +17,7 @@ import type { BonusTier } from '@/lib/types/database';
 
 export default function ConfiguracionPage() {
     const router = useRouter();
-    const { settings, loading, error, updateSettingsWithEffectiveDate, refetch } = useSettings();
+    const { settings, loading, error, updateSettings, refetch } = useSettings();
     const [saving, setSaving] = useState(false);
     const [signingOut, setSigningOut] = useState(false);
 
@@ -28,7 +28,6 @@ export default function ConfiguracionPage() {
     const [streakThreshold, setStreakThreshold] = useState('');
     const [bonusTiers, setBonusTiers] = useState<BonusTier[]>([]);
     const [currentShift, setCurrentShift] = useState<'morning' | 'afternoon' | null>(null);
-    const [applyTo, setApplyTo] = useState<ApplyTo>('next_week');
 
     // Initialize form when settings load
     useEffect(() => {
@@ -62,14 +61,14 @@ export default function ConfiguracionPage() {
             // Sort bonus tiers by threshold
             const sortedTiers = [...bonusTiers].sort((a, b) => a.threshold - b.threshold);
 
-            await updateSettingsWithEffectiveDate({
+            await updateSettings({
                 weekly_target: parseFloat(weeklyTarget) || 0,
                 base_commission_rate: parseFloat(baseCommission) / 100 || 0,
                 streak_bonus_rate: parseFloat(streakBonus) / 100 || 0,
                 streak_bonus_threshold: parseFloat(streakThreshold) || 0,
                 fixed_bonus_tiers: sortedTiers,
                 current_shift: currentShift,
-            }, applyTo);
+            });
 
             toast.success(translations.settings.saved);
         } catch (error) {
@@ -224,13 +223,6 @@ export default function ConfiguracionPage() {
                             Facturación mínima para activar el bono por racha. Actual: {formatCurrency(settings.streak_bonus_threshold || 0)}
                         </p>
                     </div>
-
-                    <div className="pt-2 border-t">
-                        <p className="text-sm font-medium">Racha Actual</p>
-                        <p className="text-2xl font-bold text-primary">
-                            {settings.current_streak_count} semanas
-                        </p>
-                    </div>
                 </CardContent>
             </Card>
 
@@ -323,32 +315,6 @@ export default function ConfiguracionPage() {
                             <RadioGroupItem value="afternoon" id="afternoon" />
                             <Label htmlFor="afternoon">
                                 🌙 Turno Tarde (forzar esta semana)
-                            </Label>
-                        </div>
-                    </RadioGroup>
-                </CardContent>
-            </Card>
-
-            {/* Apply To */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>¿Cuándo aplicar los cambios?</CardTitle>
-                    <CardDescription>
-                        Elige si los cambios afectan esta semana o la próxima
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <RadioGroup value={applyTo} onValueChange={(val) => setApplyTo(val as ApplyTo)}>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="current_week" id="current" />
-                            <Label htmlFor="current">
-                                Esta semana (aplica retroactivamente desde el sábado)
-                            </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="next_week" id="next" />
-                            <Label htmlFor="next">
-                                Próxima semana (desde el próximo sábado)
                             </Label>
                         </div>
                     </RadioGroup>

@@ -19,46 +19,7 @@ export interface Database {
                     created_at?: string;
                 };
             };
-            settings: {
-                Row: {
-                    id: string;
-                    user_id: string;
-                    weekly_target: number;
-                    base_commission_rate: number;
-                    streak_bonus_rate: number;
-                    streak_bonus_threshold: number;
-                    current_streak_count: number;
-                    fixed_bonus_tiers: BonusTier[];
-                    week_start_day: number;
-                    created_at: string;
-                    updated_at: string;
-                };
-                Insert: {
-                    id?: string;
-                    user_id: string;
-                    weekly_target: number;
-                    base_commission_rate: number;
-                    streak_bonus_rate: number;
-                    streak_bonus_threshold?: number;
-                    current_streak_count?: number;
-                    fixed_bonus_tiers?: BonusTier[];
-                    week_start_day?: number;
-                    shift_pattern_start: string;
-                    created_at?: string;
-                    updated_at?: string;
-                };
-                Update: {
-                    weekly_target?: number;
-                    base_commission_rate?: number;
-                    streak_bonus_rate?: number;
-                    streak_bonus_threshold?: number;
-                    current_streak_count?: number;
-                    fixed_bonus_tiers?: BonusTier[];
-                    week_start_day?: number;
-                    created_at?: string;
-                    updated_at?: string;
-                };
-            };
+
             settings_history: {
                 Row: {
                     id: string;
@@ -67,7 +28,7 @@ export interface Database {
                     base_commission_rate: number;
                     streak_bonus_rate: number;
                     streak_bonus_threshold: number;
-                    current_streak_count: number;
+                    streak_threshold_met: boolean;
                     fixed_bonus_tiers: BonusTier[];
                     week_start_day: number;
                     current_shift: 'morning' | 'afternoon' | null;
@@ -83,7 +44,7 @@ export interface Database {
                     base_commission_rate: number;
                     streak_bonus_rate: number;
                     streak_bonus_threshold?: number;
-                    current_streak_count?: number;
+                    streak_threshold_met?: boolean;
                     fixed_bonus_tiers?: BonusTier[];
                     week_start_day?: number;
                     current_shift?: 'morning' | 'afternoon' | null;
@@ -97,7 +58,7 @@ export interface Database {
                     base_commission_rate?: number;
                     streak_bonus_rate?: number;
                     streak_bonus_threshold?: number;
-                    current_streak_count?: number;
+                    streak_threshold_met?: boolean;
                     fixed_bonus_tiers?: BonusTier[];
                     week_start_day?: number;
                     current_shift?: 'morning' | 'afternoon' | null;
@@ -187,7 +148,21 @@ export interface BonusTier {
 
 // Convenience types
 export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type Settings = Database['public']['Tables']['settings']['Row'];
+
+export type Settings = {
+    id: string;
+    user_id: string;
+    weekly_target: number;
+    base_commission_rate: number;
+    streak_bonus_rate: number;
+    streak_bonus_threshold: number;
+    streak_threshold_met: boolean;
+    fixed_bonus_tiers: BonusTier[];
+    week_start_day: number;
+    created_at: string;
+    updated_at: string;
+};
+
 export type SettingsHistory = Database['public']['Tables']['settings_history']['Row'];
 export type Client = Database['public']['Tables']['clients']['Row'];
 export type Job = Database['public']['Tables']['jobs']['Row'];

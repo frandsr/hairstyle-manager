@@ -5,7 +5,7 @@ import { isMockAuthMode, mockStore } from '../supabase/mock-data';
 import { supabase, mockUser } from '../supabase/client';
 import type { Job, NewJob, UpdateJob } from '../types/database';
 import { getWeekBounds } from '../utils/date';
-import { updateStreakIfNeeded } from '../utils/streak';
+import { ensureSettingsHistoryForWeek, calculateAndUpdateStreakStatus } from '../utils/settings-history-manager';
 
 export function useJobs(startDate?: Date, endDate?: Date) {
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -86,11 +86,14 @@ export function useJobs(startDate?: Date, endDate?: Date) {
                 mockStore.jobs = [newJob, ...mockStore.jobs];
                 await fetchJobs();
 
-                // Update streak after adding job
-                await updateStreakIfNeeded();
+                // Calculate and update streak status for the week
+                await calculateAndUpdateStreakStatus(new Date(job.date), mockUser.id);
             } else {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) throw new Error('Not authenticated');
+
+                // Ensure settings_history exists for the job's week before creating
+                await ensureSettingsHistoryForWeek(new Date(job.date), user.id);
 
                 const { error } = await supabase
                     .from('jobs')
@@ -99,8 +102,8 @@ export function useJobs(startDate?: Date, endDate?: Date) {
                 if (error) throw error;
                 await fetchJobs();
 
-                // Update streak after adding job
-                await updateStreakIfNeeded();
+                // Calculate and update streak status for the week
+                await calculateAndUpdateStreakStatus(new Date(job.date), user.id);
             }
         } catch (err) {
             setError(err as Error);
@@ -111,14 +114,38 @@ export function useJobs(startDate?: Date, endDate?: Date) {
     async function updateJob(id: string, updates: UpdateJob) {
         try {
             if (isMockAuthMode()) {
+                const oldJob = mockStore.jobs.find(job => job.id === id);
+                const oldDate = oldJob?.date;
+
                 mockStore.jobs = mockStore.jobs.map(job =>
                     job.id === id ? { ...job, ...updates, updated_at: new Date().toISOString() } : job
                 );
                 await fetchJobs();
 
-                // Update streak after updating job
-                await updateStreakIfNeeded();
+                const updatedJob = mockStore.jobs.find(job => job.id === id);
+                const newDate = updatedJob?.date;
+
+                // Recalculate streak for affected weeks
+                if (newDate) {
+                    await calculateAndUpdateStreakStatus(new Date(newDate), mockUser.id);
+                }
+                // If date changed, also recalculate for old week
+                if (oldDate && oldDate !== newDate) {
+                    await calculateAndUpdateStreakStatus(new Date(oldDate), mockUser.id);
+                }
             } else {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('Not authenticated');
+
+                // Get old job data to check if date changed
+                const { data: oldJob } = await supabase
+                    .from('jobs')
+                    .select('date')
+                    .eq('id', id)
+                    .single();
+
+                const oldDate = oldJob?.date;
+
                 const { error } = await supabase
                     .from('jobs')
                     .update(updates)
@@ -126,6 +153,16 @@ export function useJobs(startDate?: Date, endDate?: Date) {
 
                 if (error) throw error;
                 await fetchJobs();
+
+                // Recalculate streak for affected weeks
+                const newDate = updates.date || oldDate;
+                if (newDate) {
+                    await calculateAndUpdateStreakStatus(new Date(newDate), user.id);
+                }
+                // If date changed, also recalculate for old week
+                if (oldDate && updates.date && oldDate !== updates.date) {
+                    await calculateAndUpdateStreakStatus(new Date(oldDate), user.id);
+                }
             }
         } catch (err) {
             setError(err as Error);
@@ -136,12 +173,29 @@ export function useJobs(startDate?: Date, endDate?: Date) {
     async function deleteJob(id: string) {
         try {
             if (isMockAuthMode()) {
+                const deletedJob = mockStore.jobs.find(job => job.id === id);
+                const deletedDate = deletedJob?.date;
+
                 mockStore.jobs = mockStore.jobs.filter(job => job.id !== id);
                 await fetchJobs();
 
-                // Update streak after deleting job
-                await updateStreakIfNeeded();
+                // Recalculate streak for the week of the deleted job
+                if (deletedDate) {
+                    await calculateAndUpdateStreakStatus(new Date(deletedDate), mockUser.id);
+                }
             } else {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('Not authenticated');
+
+                // Get job date before deleting
+                const { data: deletedJob } = await supabase
+                    .from('jobs')
+                    .select('date')
+                    .eq('id', id)
+                    .single();
+
+                const deletedDate = deletedJob?.date;
+
                 const { error } = await supabase
                     .from('jobs')
                     .delete()
@@ -149,6 +203,11 @@ export function useJobs(startDate?: Date, endDate?: Date) {
 
                 if (error) throw error;
                 await fetchJobs();
+
+                // Recalculate streak for the week of the deleted job
+                if (deletedDate) {
+                    await calculateAndUpdateStreakStatus(new Date(deletedDate), user.id);
+                }
             }
         } catch (err) {
             setError(err as Error);

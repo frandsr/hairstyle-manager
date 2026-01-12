@@ -6,9 +6,7 @@ import { supabase } from '../supabase/client';
 import type { Settings, SettingsHistory } from '../types/database';
 import type { Settings as SettingsCalc } from '../calculations/commission';
 import { getWeekBounds } from '../calculations/weekly-cycle';
-import { addWeeks } from 'date-fns';
-
-export type ApplyTo = 'current_week' | 'next_week';
+import { ensureSettingsHistoryForWeek } from '../utils/settings-history-manager';
 
 export function useSettings() {
     const [settings, setSettings] = useState<Settings | null>(null);
@@ -22,62 +20,36 @@ export function useSettings() {
     async function fetchSettings() {
         try {
             setLoading(true);
-
             if (isMockAuthMode()) {
-                // Use mock data
                 setSettings(mockStore.settings);
-            } else {
-                // Fetch current active settings from settings_history
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) throw new Error('Not authenticated');
-
-                let { data, error } = await supabase
-                    .from('settings_history')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .is('effective_to', null)
-                    .maybeSingle();
-
-                if (error) throw error;
-
-                // If no settings exist, create defaults
-                if (!data) {
-                    console.log('No settings found, creating defaults...');
-                    const { data: newSettings, error: createError } = await supabase
-                        .from('settings_history')
-                        .insert({
-                            user_id: user.id,
-                            weekly_target: 150000,
-                            base_commission_rate: 0.40,
-                            streak_bonus_rate: 0.05,
-                            streak_bonus_threshold: 0,
-                            effective_from: new Date().toISOString(),
-                            effective_to: null
-                        })
-                        .select()
-                        .single();
-
-                    if (createError) throw createError;
-                    data = newSettings;
-                }
-
-                // Convert SettingsHistory to Settings (keeping types compatible)
-                const settingsData: Settings = {
-                    id: data.id,
-                    user_id: data.user_id,
-                    weekly_target: data.weekly_target,
-                    base_commission_rate: data.base_commission_rate,
-                    streak_bonus_rate: data.streak_bonus_rate,
-                    streak_bonus_threshold: data.streak_bonus_threshold || 0,
-                    current_streak_count: data.current_streak_count,
-                    fixed_bonus_tiers: data.fixed_bonus_tiers,
-                    week_start_day: data.week_start_day,
-                    created_at: data.created_at,
-                    updated_at: data.updated_at,
-                };
-
-                setSettings(settingsData);
+                return;
             }
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                setSettings(null);
+                return;
+            }
+
+            // Ensure settings_history exists for current week
+            const currentWeekSettings = await ensureSettingsHistoryForWeek(new Date(), user.id);
+
+            // Convert SettingsHistory to Settings (keeping types compatible)
+            const settingsData: Settings = {
+                id: currentWeekSettings.id,
+                user_id: currentWeekSettings.user_id,
+                weekly_target: currentWeekSettings.weekly_target,
+                base_commission_rate: currentWeekSettings.base_commission_rate,
+                streak_bonus_rate: currentWeekSettings.streak_bonus_rate,
+                streak_bonus_threshold: currentWeekSettings.streak_bonus_threshold || 0,
+                streak_threshold_met: currentWeekSettings.streak_threshold_met,
+                fixed_bonus_tiers: currentWeekSettings.fixed_bonus_tiers,
+                week_start_day: currentWeekSettings.week_start_day,
+                created_at: currentWeekSettings.created_at,
+                updated_at: currentWeekSettings.updated_at,
+            };
+
+            setSettings(settingsData);
         } catch (err) {
             console.error('Error fetching settings:', err);
             setError(err as Error);
@@ -86,15 +58,7 @@ export function useSettings() {
         }
     }
 
-    async function updateSettings(updates: Partial<Settings>) {
-        // Legacy function - defaults to "next_week" for safety
-        return updateSettingsWithEffectiveDate(updates, 'next_week');
-    }
-
-    async function updateSettingsWithEffectiveDate(
-        updates: Partial<Omit<SettingsHistory, 'id' | 'user_id' | 'effective_from' | 'effective_to' | 'created_at' | 'updated_at'>>,
-        applyTo: ApplyTo
-    ) {
+    async function updateSettings(updates: Partial<Omit<SettingsHistory, 'id' | 'user_id' | 'effective_from' | 'effective_to' | 'created_at' | 'updated_at'>>) {
         try {
             if (isMockAuthMode()) {
                 // Update mock data
@@ -106,115 +70,63 @@ export function useSettings() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Not authenticated');
 
-            if (applyTo === 'current_week') {
-                // Apply to current week: Update the active record in place
-                const currentWeekStart = getWeekBounds(new Date()).start.toISOString();
+            // Ensure settings exist for current week
+            await ensureSettingsHistoryForWeek(new Date(), user.id);
 
-                // Find the record active for current week
-                const { data: activeRecord } = await supabase
-                    .from('settings_history')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .lte('effective_from', currentWeekStart)
-                    .or(`effective_to.gt.${currentWeekStart},effective_to.is.null`)
-                    .order('effective_from', { ascending: false })
-                    .limit(1)
-                    .single();
+            const currentWeekStart = getWeekBounds(new Date()).start.toISOString();
 
-                if (!activeRecord) throw new Error('No active settings found for current week');
+            // Find the record active for current week
+            const { data: activeRecord } = await supabase
+                .from('settings_history')
+                .select('*')
+                .eq('user_id', user.id)
+                .lte('effective_from', currentWeekStart)
+                .or(`effective_to.gt.${currentWeekStart},effective_to.is.null`)
+                .order('effective_from', { ascending: false })
+                .limit(1)
+                .single();
 
-                // Update in place
-                const { data, error } = await supabase
-                    .from('settings_history')
-                    .update({ ...updates, updated_at: new Date().toISOString() })
-                    .eq('id', activeRecord.id)
-                    .select()
-                    .single();
+            if (!activeRecord) throw new Error('No active settings found for current week');
 
-                if (error) throw error;
+            // Update in place
+            const { data, error } = await supabase
+                .from('settings_history')
+                .update({ ...updates, updated_at: new Date().toISOString() })
+                .eq('id', activeRecord.id)
+                .select()
+                .single();
 
-                // Update local state
-                const settingsData: Settings = {
-                    id: data.id,
-                    user_id: data.user_id,
-                    weekly_target: data.weekly_target,
-                    base_commission_rate: data.base_commission_rate,
-                    streak_bonus_rate: data.streak_bonus_rate,
-                    streak_bonus_threshold: data.streak_bonus_threshold || 0,
-                    current_streak_count: data.current_streak_count,
-                    fixed_bonus_tiers: data.fixed_bonus_tiers,
-                    week_start_day: data.week_start_day,
-                    created_at: data.created_at,
-                    updated_at: data.updated_at,
-                };
-                setSettings(settingsData);
+            if (error) throw error;
 
-            } else {
-                // Apply to next week: Create new record or update future record
-                const nextSaturday = addWeeks(getWeekBounds(new Date()).end, 1);
-                const nextSaturdayISO = nextSaturday.toISOString();
-
-                // Check if a future record exists
-                const { data: futureRecord } = await supabase
-                    .from('settings_history')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .gte('effective_from', nextSaturdayISO)
-                    .maybeSingle();
-
-                if (futureRecord) {
-                    // Update existing future record
-                    await supabase
-                        .from('settings_history')
-                        .update({ ...updates, updated_at: new Date().toISOString() })
-                        .eq('id', futureRecord.id);
-                } else {
-                    // Close current active record and create new one
-                    await supabase
-                        .from('settings_history')
-                        .update({ effective_to: nextSaturdayISO })
-                        .eq('user_id', user.id)
-                        .is('effective_to', null);
-
-                    // Get current settings to use as base
-                    const { data: currentSettings } = await supabase
-                        .from('settings_history')
-                        .select('*')
-                        .eq('user_id', user.id)
-                        .is('effective_to', null)
-                        .maybeSingle();
-
-                    await supabase
-                        .from('settings_history')
-                        .insert({
-                            user_id: user.id,
-                            weekly_target: updates.weekly_target ?? currentSettings?.weekly_target ?? 150000,
-                            base_commission_rate: updates.base_commission_rate ?? currentSettings?.base_commission_rate ?? 0.40,
-                            streak_bonus_rate: updates.streak_bonus_rate ?? currentSettings?.streak_bonus_rate ?? 0.05,
-                            current_streak_count: updates.current_streak_count ?? currentSettings?.current_streak_count ?? 0,
-                            fixed_bonus_tiers: updates.fixed_bonus_tiers ?? currentSettings?.fixed_bonus_tiers ?? [],
-                            week_start_day: updates.week_start_day ?? currentSettings?.week_start_day ?? 1,
-                            current_shift: updates.current_shift ?? null,
-                            effective_from: nextSaturdayISO,
-                            effective_to: null
-                        });
-                }
-
-                // Refetch to get latest state
-                await fetchSettings();
-            }
+            // Update local state
+            const settingsData: Settings = {
+                id: data.id,
+                user_id: data.user_id,
+                weekly_target: data.weekly_target,
+                base_commission_rate: data.base_commission_rate,
+                streak_bonus_rate: data.streak_bonus_rate,
+                streak_bonus_threshold: data.streak_bonus_threshold || 0,
+                streak_threshold_met: data.streak_threshold_met,
+                fixed_bonus_tiers: data.fixed_bonus_tiers,
+                week_start_day: data.week_start_day,
+                created_at: data.created_at,
+                updated_at: data.updated_at,
+            };
+            setSettings(settingsData);
         } catch (err) {
             setError(err as Error);
             throw err;
         }
     }
 
-    // Convert to calculation format
+
+
+    // Convert to calculation format (no streak count - calculated separately)
     const calculationSettings: SettingsCalc | null = settings ? {
         weeklyTarget: settings.weekly_target,
         baseCommissionRate: settings.base_commission_rate,
         streakBonusRate: settings.streak_bonus_rate,
-        currentStreakCount: settings.current_streak_count,
+        streakBonusThreshold: settings.streak_bonus_threshold,
         fixedBonusTiers: settings.fixed_bonus_tiers,
     } : null;
 
@@ -224,7 +136,6 @@ export function useSettings() {
         loading,
         error,
         updateSettings,
-        updateSettingsWithEffectiveDate,
         refetch: fetchSettings,
     };
 }

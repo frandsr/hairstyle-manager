@@ -3,7 +3,6 @@ export interface Settings {
     baseCommissionRate: number; // As decimal (e.g., 0.15 for 15%)
     streakBonusRate: number; // As decimal (e.g., 0.05 for 5%)
     streakBonusThreshold: number; // Minimum revenue to activate streak bonus
-    currentStreakCount: number;
     fixedBonusTiers: BonusTier[];
 }
 
@@ -19,7 +18,8 @@ export interface BonusTier {
  */
 export function calculateCommission(
     revenue: number,
-    settings: Settings
+    settings: Settings,
+    currentStreakCount: number = 0
 ): {
     baseCommission: number;
     streakBonus: number;
@@ -33,7 +33,7 @@ export function calculateCommission(
     const streakApplied = revenue >= settings.streakBonusThreshold;
 
     // Streak bonus (capped at 4 weeks, only applied if threshold met)
-    const effectiveStreakCount = streakApplied ? Math.min(settings.currentStreakCount, 4) : 0;
+    const effectiveStreakCount = streakApplied ? Math.min(currentStreakCount, 4) : 0;
     const streakBonus = revenue * (settings.streakBonusRate * effectiveStreakCount);
 
     // Total commission
