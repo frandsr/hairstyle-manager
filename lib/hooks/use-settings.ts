@@ -43,25 +43,45 @@ export function useSettings() {
                 return;
             }
 
-            // Ensure settings_history exists for current week
-            const currentWeekSettings = await ensureSettingsHistoryForWeek(new Date(), user.id);
+            console.log('[fetchSettings] Fetching settings for user:', user.id);
+
+            // Check for ANY settings_history record for this user
+            const { data: existingSettings, error: queryError } = await supabase
+                .from('settings_history')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('effective_from', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            console.log('[fetchSettings] Query result:', { existingSettings, queryError });
+
+            if (!existingSettings) {
+                // No settings exist - this is a first-time user
+                console.log('[fetchSettings] No settings found, showing setup modal');
+                setSettings(null);
+                return;
+            }
+
+            console.log('[fetchSettings] Settings found, converting to Settings type');
 
             // Convert SettingsHistory to Settings (keeping types compatible)
             const settingsData: Settings = {
-                id: currentWeekSettings.id,
-                user_id: currentWeekSettings.user_id,
-                weekly_target: currentWeekSettings.weekly_target,
-                base_commission_rate: currentWeekSettings.base_commission_rate,
-                streak_bonus_rate: currentWeekSettings.streak_bonus_rate,
-                streak_bonus_threshold: currentWeekSettings.streak_bonus_threshold || 0,
-                streak_threshold_met: currentWeekSettings.streak_threshold_met,
-                fixed_bonus_tiers: currentWeekSettings.fixed_bonus_tiers,
-                week_start_day: currentWeekSettings.week_start_day,
-                current_shift: currentWeekSettings.current_shift,
-                created_at: currentWeekSettings.created_at,
-                updated_at: currentWeekSettings.updated_at,
+                id: existingSettings.id,
+                user_id: existingSettings.user_id,
+                weekly_target: existingSettings.weekly_target,
+                base_commission_rate: existingSettings.base_commission_rate,
+                streak_bonus_rate: existingSettings.streak_bonus_rate,
+                streak_bonus_threshold: existingSettings.streak_bonus_threshold || 0,
+                streak_threshold_met: existingSettings.streak_threshold_met,
+                fixed_bonus_tiers: existingSettings.fixed_bonus_tiers,
+                week_start_day: existingSettings.week_start_day,
+                current_shift: existingSettings.current_shift,
+                created_at: existingSettings.created_at,
+                updated_at: existingSettings.updated_at,
             };
 
+            console.log('[fetchSettings] Setting settings state:', settingsData);
             setSettings(settingsData);
         } catch (err) {
             console.error('Error fetching settings:', err);
