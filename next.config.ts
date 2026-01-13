@@ -47,6 +47,15 @@ const pwaConfig = withPWA({
 const nextConfig: NextConfig = {
   // Empty turbopack config to silence Next.js 16 warning about webpack config
   turbopack: {},
+  // Allow images from Google for profile pictures
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+    ],
+  },
 };
 
 export default pwaConfig(nextConfig);
