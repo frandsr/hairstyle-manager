@@ -3,6 +3,7 @@ import { BottomNav } from '@/components/layout/bottom-nav';
 import { Toaster } from 'sonner';
 import { ShiftThemeProvider } from '@/lib/context/shift-theme-context';
 import { SetupModal } from '@/components/modals/setup-modal';
+import { InstallPrompt } from '@/components/install-prompt';
 
 export default function AppLayout({
     children,
@@ -18,6 +19,7 @@ export default function AppLayout({
                     {children}
                 </main>
                 <BottomNav />
+                <InstallPrompt />
                 <Toaster position="top-center" />
             </div>
         </ShiftThemeProvider>
