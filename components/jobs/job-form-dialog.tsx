@@ -139,6 +139,9 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData, onCli
         try {
             setSaving(true);
 
+            // Close modal IMMEDIATELY to prevent flash during async operation
+            onOpenChange(false);
+
             await onSubmit({
                 client_id: clientId || null,
                 amount: parseFloat(amount),
@@ -149,9 +152,10 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData, onCli
                 tags,
             });
 
-            onOpenChange(false);
             toast.success(initialData ? 'Trabajo actualizado' : 'Trabajo agregado exitosamente');
         } catch (error) {
+            // Reopen modal on error so user can try again
+            onOpenChange(true);
             toast.error('Error al guardar el trabajo');
             console.error(error);
         } finally {
