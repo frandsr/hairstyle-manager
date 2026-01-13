@@ -162,7 +162,7 @@ export function JobFormDialog({ open, onOpenChange, onSubmit, initialData, onCli
     return (
         <>
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
                             {initialData ? 'Editar Trabajo' : translations.jobs.newJob}
