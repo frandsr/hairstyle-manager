@@ -76,7 +76,8 @@ export default function HistorialPage() {
         } else {
             await addJob(jobData);
         }
-        setEditingJob(null);
+        // Don't clear editingJob here - let the modal's onOpenChange handler do it
+        // This prevents the form from resetting before the modal closes
     };
 
     const handleNewJob = () => {
