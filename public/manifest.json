@@ -1,11 +1,11 @@
 {
-    "name": "EstilistaPro",
-    "short_name": "EstilistaPro",
-    "description": "Gestión profesional para estilistas - Trabajos, clientas y ganancias",
-    "start_url": "/dashboard",
+    "name": "Hairstyle Manager",
+    "short_name": "Hairstyle",
+    "description": "Gestiona clientas, trabajos y ganancias",
+    "start_url": "/",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#9333ea",
+    "background_color": "#000000",
+    "theme_color": "#000000",
     "orientation": "portrait",
     "icons": [
         {

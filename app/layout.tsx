@@ -13,15 +13,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EstilistaPro - Gestión Profesional para Estilistas",
+  title: "Hairstyle Manager - Gestión Profesional para Estilistas",
   description: "Gestiona tus trabajos, clientas y ganancias de forma profesional",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black",
+    title: "Hairstyle",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
