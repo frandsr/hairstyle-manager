@@ -18,6 +18,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    "types": [],
     "plugins": [
       {
         "name": "next"
@@ -38,6 +39,7 @@
     "**/*.mts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "node_modules/@types/minimatch"
   ]
 }
