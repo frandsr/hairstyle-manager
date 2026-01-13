@@ -318,7 +318,7 @@ export default function ConfiguracionPage() {
             </Card>
 
             {/* Actions */}
-            <div className="flex gap-3 sticky bottom-20 bg-background pt-4 pb-2">
+            <div className="flex gap-3 sticky bottom-16 bg-background pt-4 pb-2">
                 <Button onClick={handleSave} disabled={saving} className="flex-1">
                     {saving ? (
                         <>
