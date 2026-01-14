@@ -52,7 +52,9 @@ export default function ConfiguracionPage() {
 
     const handleTierChange = (index: number, field: 'threshold' | 'bonus', value: string) => {
         const newTiers = [...bonusTiers];
-        newTiers[index][field] = parseFloat(value) || 0;
+        // Store as string if empty or being edited, otherwise as number
+        // @ts-ignore - Allow string values during editing
+        newTiers[index][field] = value === '' ? '' : (parseFloat(value) || 0);
         setBonusTiers(newTiers);
     };
 
@@ -251,6 +253,7 @@ export default function ConfiguracionPage() {
                                         value={tier.threshold}
                                         onChange={(e) => handleTierChange(index, 'threshold', e.target.value)}
                                         placeholder="100000"
+                                        onFocus={(e) => e.target.select()}
                                     />
                                 </div>
                             </div>
@@ -267,6 +270,7 @@ export default function ConfiguracionPage() {
                                         value={tier.bonus}
                                         onChange={(e) => handleTierChange(index, 'bonus', e.target.value)}
                                         placeholder="10000"
+                                        onFocus={(e) => e.target.select()}
                                     />
                                 </div>
                             </div>
